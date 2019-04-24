@@ -36,5 +36,6 @@ setup(
         "lms.djangoapp": [
             "openedx_proversity_reports = openedx_proversity_reports.apps:OpenEdxProversityReportsConfig"
         ],
-    }
+    },
+    include_package_data=True,
 )

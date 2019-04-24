@@ -13,7 +13,11 @@ class OpenEdxProversityReportsConfig(AppConfig):
 
     plugin_app = {
         'settings_config': {
-            'lms.djangoapp': {},
-            'cms.djangoapp': {},
+            'lms.djangoapp': {
+                'test': {'relative_path': 'settings.test'},
+                'common': {'relative_path': 'settings.common'},
+                'aws': {'relative_path': 'settings.aws'},
+                'production': {'relative_path': 'settings.production'},
+            },
         },
     }
