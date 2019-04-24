@@ -1,0 +1,3 @@
+include AUTHORS.txt
+include README.rst
+recursive-include openedx_proversity_reports *.html *.png *.gif *js *.css *jpg *jpeg *svg *py
