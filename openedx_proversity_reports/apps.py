@@ -20,4 +20,11 @@ class OpenEdxProversityReportsConfig(AppConfig):
                 'production': {'relative_path': 'settings.production'},
             },
         },
+        'url_config': {
+            'lms.djangoapp': {
+                'namespace': 'proversity-reports',
+                'regex': r'^proversity-reports/',
+                'relative_path': 'urls',
+            },
+        },
     }
