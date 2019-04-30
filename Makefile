@@ -16,3 +16,6 @@ clean: ## delete most git-ignored files
 
 requirements: ## install environment requirements
 	pip install -r requirements.txt
+
+run-quality-test: clean ## Run quality test.
+	pylint ./openedx_proversity_reports --rcfile=./setup.cfg
