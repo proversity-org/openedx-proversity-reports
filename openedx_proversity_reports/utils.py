@@ -1,10 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Utils file for Openedx Proversity Reports.
 """
 from completion.models import BlockCompletion
 
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
+from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
+from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_has_role, get_course_staff_role
 from openedx_proversity_reports.edxapp_wrapper.get_supported_fields import get_supported_fields
 
 
@@ -23,7 +28,7 @@ def generate_report_as_list(users, course_key, block_report_filter):
                 number = int(identifier) + 1
                 name = name.replace(identifier, str(number))
             except ValueError:
-                name = "{}-{}".format(name, "1")
+                name = u"{}-{}".format(name, "1")
 
             name = verify_name(name, data)
 
@@ -36,7 +41,7 @@ def generate_report_as_list(users, course_key, block_report_filter):
         if child.get("type") in block_report_filter:
 
             if parent:
-                name = "{}-{}".format(parent.get('display_name'), child.get('display_name'))
+                name = u"{}-{}".format(parent.get('display_name'), child.get('display_name'))
             else:
                 name = child.get('display_name')
 
@@ -48,11 +53,23 @@ def generate_report_as_list(users, course_key, block_report_filter):
 
     data = []
     for user in users:
+        if user_has_role(user, get_course_staff_role(course_key)):
+            continue
         root_block = get_root_block(user, course_key)
         sections = root_block.get('children', [])
+        cohort = get_course_cohort(user=user, course_key=course_key)
+        user_teams = get_course_teams(membership__user=user, course_id=course_key)
+
+        try:
+            team = user_teams[0]
+        except IndexError:
+            team = None
+
         user_data = dict(
             username=user.username,
             user_id=user.id,
+            cohort=cohort.name if cohort else "",
+            team=team.name if team else "",
         )
 
         for section in sections:
