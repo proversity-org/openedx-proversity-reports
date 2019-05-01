@@ -13,6 +13,16 @@ def plugin_settings(settings):
         settings.OPR_COURSE_BLOCKS
     )
 
+    settings.OPR_COURSE_COHORT = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_COHORT',
+        settings.OPR_COURSE_COHORT
+    )
+
+    settings.OPR_COURSE_TEAMS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_TEAMS',
+        settings.OPR_COURSE_TEAMS
+    )
+
     settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_EDX_REST_FRAMEWORK_EXTENSIONS',
         settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS
@@ -26,6 +36,11 @@ def plugin_settings(settings):
     settings.OPR_OPENEDX_PERMISSIONS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_OPENEDX_PERMISSIONS',
         settings.OPR_OPENEDX_PERMISSIONS
+    )
+
+    settings.OPR_STUDENT_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_STUDENT_LIBRARY',
+        settings.OPR_STUDENT_LIBRARY
     )
 
     settings.OPR_SUPPORTED_FIELDS = getattr(settings, 'ENV_TOKENS', {}).get(
