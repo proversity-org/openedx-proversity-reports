@@ -16,4 +16,14 @@ urlpatterns = [
         views.CompletionReportView.as_view(),
         name='completion-report-data'
     ),
+    url(
+        r'^generate-last-page-accessed-report$',
+        views.GenerateLastPageReportView.as_view(),
+        name='generate-last-page-accessed-report'
+    ),
+    url(
+        r'^last-page-accessed-report-data$',
+        views.LastPageReportView.as_view(),
+        name='last-page-accessed-report-data'
+    ),
 ]
