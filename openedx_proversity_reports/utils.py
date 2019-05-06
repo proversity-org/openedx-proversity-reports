@@ -24,7 +24,7 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
         """
         if child.get('type') in block_report_filter:
 
-            aux = user_data.get(child.get('type'), [])
+            type_data = user_data.get(child.get('type'), [])
 
             child_data = dict(
                 name=child.get('display_name'),
@@ -44,9 +44,9 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
                 child_data['vertical_name'] = vertical.get('display_name')
                 child_data['vertical_number'] = vertical.get('position_number')
 
-            aux.append(child_data)
+            type_data.append(child_data)
 
-            user_data[child.get('type')] = aux
+            user_data[child.get('type')] = type_data
 
     data = []
     for user in users:
@@ -98,12 +98,11 @@ def get_root_block(user, course_key):
         of those children.
         """
         children = block.get('children', [])
-
         block_type = block.get("type")
 
-        counter[block_type] = counter.get(block_type, -1) + 1
-
-        block['position_number'] = counter[block_type]
+        if block_type:
+            counter[block_type] = counter.get(block_type, -1) + 1
+            block['position_number'] = counter[block_type]
 
         for i in range(len(children)):
             child_id = block['children'][i]
