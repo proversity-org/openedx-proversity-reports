@@ -18,7 +18,7 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
     Returns a list with the user information for every block in block_report_filter.
     """
 
-    def update_user_dict(child, user_data):
+    def update_user_dict(child, user_data, section=None, subsection=None, vertical=None):
         """
         Returns the complete data for the given values.
         """
@@ -72,11 +72,11 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
         for section in sections:
             update_user_dict(section, user_data)
             for subsection in section.get('children', []):
-                update_user_dict(subsection, user_data)
+                update_user_dict(subsection, user_data, section)
                 for vertical in subsection.get('children', []):
-                    update_user_dict(vertical, user_data)
+                    update_user_dict(vertical, user_data, section, subsection)
                     for component in vertical.get('children', []):
-                        update_user_dict(component, user_data)
+                        update_user_dict(component, user_data, section, subsection, vertical)
 
         data.append(user_data)
 
