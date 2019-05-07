@@ -1,7 +1,6 @@
 """
 This file contains the views for openedx-proversity-reports
 """
-import json
 import logging
 
 from celery.result import AsyncResult

@@ -13,49 +13,46 @@ from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_h
 from openedx_proversity_reports.edxapp_wrapper.get_supported_fields import get_supported_fields
 
 
-def generate_report_as_list(users, course_key, block_report_filter):
+def generate_report_as_list(users, course_key, block_report_filter, root_block):
     """
     Returns a list with the user information for every block in block_report_filter.
     """
 
-    def verify_name(name, data):
-        """
-        This verifies if the name is already in use and generates a new one.
-        """
-        if name in data:
-            identifier = name.split('-')[-1]
-            try:
-                number = int(identifier) + 1
-                name = name.replace(identifier, str(number))
-            except ValueError:
-                name = u"{}-{}".format(name, "1")
-
-            name = verify_name(name, data)
-
-        return name
-
-    def update_user_dict(child, user_data, parent=None):
+    def update_user_dict(child, user_data, section=None, subsection=None, vertical=None):
         """
         Returns the complete data for the given values.
         """
-        if child.get("type") in block_report_filter:
+        if child.get('type') in block_report_filter:
 
-            if parent:
-                name = u"{}-{}".format(parent.get('display_name'), child.get('display_name'))
-            else:
-                name = child.get('display_name')
+            type_data = user_data.get(child.get('type'), [])
 
-            aux = user_data.get(child.get('type'), {})
-            name = verify_name(name, aux)
-            aux[name] = child.get('complete')
+            child_data = dict(
+                name=child.get('display_name'),
+                complete=child.get('complete'),
+                number=child.get('position_number'),
+            )
 
-            user_data[child.get('type')] = aux
+            if section and section != child:
+                child_data['section_name'] = section.get('display_name')
+                child_data['section_number'] = section.get('position_number')
+
+            if subsection and subsection != child:
+                child_data['subsection_name'] = subsection.get('display_name')
+                child_data['subsection_number'] = subsection.get('position_number')
+
+            if vertical and vertical != child:
+                child_data['vertical_name'] = vertical.get('display_name')
+                child_data['vertical_number'] = vertical.get('position_number')
+
+            type_data.append(child_data)
+
+            user_data[child.get('type')] = type_data
 
     data = []
     for user in users:
         if user_has_role(user, get_course_staff_role(course_key)):
             continue
-        root_block = get_root_block(user, course_key)
+        mark_blocks_completed(root_block, user, course_key)
         sections = root_block.get('children', [])
         cohort = get_course_cohort(user=user, course_key=course_key)
         user_teams = get_course_teams(membership__user=user, course_id=course_key)
@@ -77,9 +74,9 @@ def generate_report_as_list(users, course_key, block_report_filter):
             for subsection in section.get('children', []):
                 update_user_dict(subsection, user_data, section)
                 for vertical in subsection.get('children', []):
-                    update_user_dict(vertical, user_data, subsection)
+                    update_user_dict(vertical, user_data, section, subsection)
                     for component in vertical.get('children', []):
-                        update_user_dict(component, user_data, vertical)
+                        update_user_dict(component, user_data, section, subsection, vertical)
 
         data.append(user_data)
 
@@ -91,7 +88,7 @@ def get_root_block(user, course_key):
     Returns the content course as dict.
     """
 
-    def populate_children(block, all_blocks):
+    def populate_children(block, all_blocks, counter={}):
         """
         Replace each child id with the full block for the child.
 
@@ -101,57 +98,18 @@ def get_root_block(user, course_key):
         of those children.
         """
         children = block.get('children', [])
+        block_type = block.get("type")
+
+        if block_type:
+            counter[block_type] = counter.get(block_type, -1) + 1
+            block['position_number'] = counter[block_type]
 
         for i in range(len(children)):
             child_id = block['children'][i]
-            child_detail = populate_children(all_blocks[child_id], all_blocks)
+            child_detail = populate_children(all_blocks[child_id], all_blocks, counter)
             block['children'][i] = child_detail
 
         return block
-
-    def mark_blocks_completed(block, user, course_key):
-        """
-        Walk course tree, marking block completion.
-        Mark 'most recent completed block as 'resume_block'
-
-        """
-        last_completed_child_position = BlockCompletion.get_latest_block_completed(user, course_key)
-
-        if last_completed_child_position:
-            recurse_mark_complete(
-                course_block_completions=BlockCompletion.get_course_completions(user, course_key),
-                latest_completion=last_completed_child_position,
-                block=block
-            )
-
-    def recurse_mark_complete(course_block_completions, latest_completion, block):
-        """
-        Helper function to walk course tree dict,
-        marking blocks as 'complete' and 'last_complete'
-
-        If all blocks are complete, mark parent block complete
-        mark parent blocks of 'last_complete' as 'last_complete'
-        """
-        block_key = block.get('block_key')
-
-        if course_block_completions.get(block_key):
-            block['complete'] = True
-            if block_key == latest_completion.full_block_key:
-                block['resume_block'] = True
-
-        if block.get('children'):
-            for idx in range(len(block['children'])):
-                recurse_mark_complete(
-                    course_block_completions,
-                    latest_completion,
-                    block=block['children'][idx]
-                )
-                if block['children'][idx]['resume_block'] is True:
-                    block['resume_block'] = True
-
-            completable_blocks = [child for child in block['children'] if child['type'] != 'discussion']
-            if len([child['complete'] for child in block['children'] if child['complete']]) == len(completable_blocks):
-                block['complete'] = True
 
     block_types_filter = [
         'course',
@@ -213,6 +171,49 @@ def get_root_block(user, course_key):
 
     root_block = populate_children(block_data[unicode(blocks.root_block_usage_key)], block_data)
 
-    mark_blocks_completed(root_block, user, course_key)
-
     return root_block
+
+
+def mark_blocks_completed(block, user, course_key):
+    """
+    Walk course tree, marking block completion.
+    Mark 'most recent completed block as 'resume_block'
+    """
+    last_completed_child_position = BlockCompletion.get_latest_block_completed(user, course_key)
+
+    if last_completed_child_position:
+        recurse_mark_complete(
+            course_block_completions=BlockCompletion.get_course_completions(user, course_key),
+            latest_completion=last_completed_child_position,
+            block=block
+        )
+
+
+def recurse_mark_complete(course_block_completions, latest_completion, block):
+    """
+    Helper function to walk course tree dict,
+    marking blocks as 'complete' and 'last_complete'
+
+    If all blocks are complete, mark parent block complete
+    mark parent blocks of 'last_complete' as 'last_complete'
+    """
+    block_key = block.get('block_key')
+
+    if course_block_completions.get(block_key):
+        block['complete'] = True
+        if block_key == latest_completion.full_block_key:
+            block['resume_block'] = True
+
+    if block.get('children'):
+        for idx in range(len(block['children'])):
+            recurse_mark_complete(
+                course_block_completions,
+                latest_completion,
+                block=block['children'][idx]
+            )
+            if block['children'][idx]['resume_block'] is True:
+                block['resume_block'] = True
+
+        completable_blocks = [child for child in block['children'] if child['type'] != 'discussion']
+        if len([child['complete'] for child in block['children'] if child['complete']]) == len(completable_blocks):
+            block['complete'] = True
