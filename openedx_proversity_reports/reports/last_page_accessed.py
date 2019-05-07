@@ -54,6 +54,7 @@ def get_last_page_accessed_data(course_list):
                 continue
             last_completed_child_position = BlockCompletion.get_latest_block_completed(user, course_key)
             parent_tree_name = ''
+            vertical_block_id = ''
 
             if last_completed_child_position:
                 vertical_blocks = blocks.topological_traversal(
