@@ -47,3 +47,13 @@ def plugin_settings(settings):
         'OPR_SUPPORTED_FIELDS',
         settings.OPR_SUPPORTED_FIELDS
     )
+
+    settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_GOOGLE_ANALYTICS_VIEW_ID',
+        settings.OPR_GOOGLE_ANALYTICS_VIEW_ID
+    )
+
+    settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS = getattr(settings, 'AUTH_TOKENS', {}).get(
+        'OPR_GOOGLE_ANALYTICS_CREDENTIALS',
+        settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS
+    )

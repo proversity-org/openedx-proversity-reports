@@ -26,4 +26,14 @@ urlpatterns = [
         views.LastPageReportView.as_view(),
         name='last-page-accessed-report-data'
     ),
+    url(
+        r'^generate-time-spent-report$',
+        views.GenerateTimeSpentReportView.as_view(),
+        name='generate-time-spent-report'
+    ),
+    url(
+        r'^time-spent-report-data$',
+        views.TimeSpentReportView.as_view(),
+        name='time-spent-report-data'
+    ),
 ]
