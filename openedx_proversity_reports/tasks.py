@@ -2,16 +2,15 @@
 Task for Openedx Proversity Report plugin.
 """
 from celery import task
-from completion.models import BlockCompletion
-from django.urls import reverse
 from django.contrib.auth.models import User
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
-from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
-from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_has_role, get_course_staff_role
-from openedx_proversity_reports.reports.last_page_accessed import get_last_page_accessed_data, get_exit_count_data
+from openedx_proversity_reports.reports.last_page_accessed import (
+    get_last_page_accessed_data,
+    get_exit_count_data,
+)
+from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
 from openedx_proversity_reports.utils import generate_report_as_list, get_root_block
 
 
@@ -69,3 +68,20 @@ def generate_last_page_accessed_report(courses):
         report_data['exit_count_data'] = get_exit_count_data(last_page_data, courses)
 
     return report_data
+
+
+@task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
+def generate_time_spent_report(courses):
+    """
+    Return the time spent data for the given courses.
+
+    Args:
+        courses: Course ids list.
+    Returns:
+        Dict with 'time_spent_data' containing time spent report data.
+    """
+    time_spent_report_data = get_time_spent_report_data(courses)
+
+    return {
+        'time_spent_data': time_spent_report_data if time_spent_report_data else {}
+    }

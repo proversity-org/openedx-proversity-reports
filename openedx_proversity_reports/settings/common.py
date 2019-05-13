@@ -47,3 +47,5 @@ def plugin_settings(settings):
     settings.OPR_OPENEDX_PERMISSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.openedx_permissions_i_v1'
     settings.OPR_STUDENT_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.student_i_v1'
     settings.OPR_SUPPORTED_FIELDS = 'openedx_proversity_reports.edxapp_wrapper.backends.supported_fields_i_v1'
+    settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS = {}
+    settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = ''
