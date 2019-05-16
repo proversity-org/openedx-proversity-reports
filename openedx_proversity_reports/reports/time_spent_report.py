@@ -72,8 +72,9 @@ def get_time_spent_report_data(course_list):
         sequential_name = ''
         sequential_id = ''
         sequential_position = 0
-        # vertical_name = ''
-        # vertical_id = ''
+        vertical_name = ''
+        vertical_id = ''
+        vertical_position = 0
 
         for block in course_blocks:
             if block.block_type == 'course':
@@ -87,22 +88,23 @@ def get_time_spent_report_data(course_list):
                 sequential_name = blocks.get_xblock_field(block, 'display_name')
                 sequential_id = block.block_id
                 sequential_position += 1
-            # if block.block_type == 'vertical':
-            #     vertical_name = blocks.get_xblock_field(block, 'display_name')
-            #     vertical_id = block.block_id
-            else:
-                continue
+            elif block.block_type == 'vertical':
+                vertical_name = blocks.get_xblock_field(block, 'display_name')
+                vertical_id = block.block_id
+                # The vertical position must be only incremental.
+                vertical_position += 1
 
-            course_block_data.append({
-                'chapter_name': chapter_name,
-                'chapter_id': chapter_id,
-                'chapter_position': chapter_postion,
-                'sequential_name': sequential_name,
-                'sequential_id': sequential_id,
-                'sequential_position': sequential_position,
-                # 'vertical_name': vertical_name,
-                # 'vertical_id': vertical_id,
-            })
+                course_block_data.append({
+                    'chapter_name': chapter_name,
+                    'chapter_id': chapter_id,
+                    'chapter_position': chapter_postion,
+                    'sequential_name': sequential_name,
+                    'sequential_id': sequential_id,
+                    'sequential_position': sequential_position,
+                    'vertical_name': vertical_name,
+                    'vertical_id': vertical_id,
+                    'vertical_position': vertical_position,
+                })
 
         temp_data_dict = {
             'course_structure': course_block_data,
@@ -173,7 +175,7 @@ def fetch_data_from_analytics(course_id):
                 'reportRequests': [{
                     'viewId': analytics_view_id,
                     'dateRanges': [
-                        {'startDate': '7DaysAgo', 'endDate': 'yesterday'},
+                        {'startDate': 'yesterday', 'endDate': 'today'},
                     ],
                     'metrics': [
                         {'expression': 'ga:pageviews'},
