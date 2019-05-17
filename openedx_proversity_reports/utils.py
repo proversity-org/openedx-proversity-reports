@@ -6,12 +6,13 @@ Utils file for Openedx Proversity Reports.
 import copy
 
 from completion.models import BlockCompletion
+from django.contrib.auth.models import User
 
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_has_role, get_course_staff_role
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role
 from openedx_proversity_reports.edxapp_wrapper.get_supported_fields import get_supported_fields
 
 
@@ -53,23 +54,17 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
     data = []
     for user in users:
         block_data = copy.deepcopy(root_block)
-        if user_has_role(user, get_course_staff_role(course_key)):
-            continue
         mark_blocks_completed(block_data, user, course_key)
         sections = block_data.get('children', [])
         cohort = get_course_cohort(user=user, course_key=course_key)
         user_teams = get_course_teams(membership__user=user, course_id=course_key)
 
-        try:
-            team = user_teams[0]
-        except IndexError:
-            team = None
-
         user_data = dict(
             username=user.username,
+            user_role=get_user_role(user, course_key),
             user_id=user.id,
-            cohort=cohort.name if cohort else "",
-            team=team.name if team else "",
+            cohort=cohort.name if cohort else '',
+            team=user_teams[0].name if user_teams else '',
         )
 
         for section in sections:
@@ -220,3 +215,44 @@ def recurse_mark_complete(course_block_completions, latest_completion, block):
         completable_blocks = [child for child in block['children'] if child['type'] != 'discussion']
         if len([child['complete'] for child in block['children'] if child['complete']]) == len(completable_blocks):
             block['complete'] = True
+
+
+def get_staff_user(course_key):
+    """
+    Returns the first staff user, to get the course structure.
+
+    Args:
+        course_key: Course key string.
+    Returns:
+        The first staff user of the course.
+    """
+    staff_user = User.objects.filter(
+        courseenrollment__course_id=course_key,
+        courseenrollment__is_active=1,
+        courseaccessrole__role='staff',
+    ).first()
+
+    return staff_user
+
+
+def get_user_role(user, course_key):
+    """
+    Returns the user string role.
+    The default role value is 'student', other roles come from the course_access_role model.
+
+    Args:
+        user: Django user to find role.
+        course_key: Course key string.
+    Returns:
+        The user role string.
+    """
+    user_role = 'student'
+    user_course_role = course_access_role().objects.filter(
+        user=user,
+        course_id=course_key
+    )
+
+    if user_course_role:
+        user_role = '-'.join([getattr(role, 'role', '') for role in user_course_role])
+
+    return user_role

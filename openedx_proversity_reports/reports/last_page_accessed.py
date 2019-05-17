@@ -11,6 +11,7 @@ from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_cour
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
 from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role
+from openedx_proversity_reports.utils import get_staff_user, get_user_role
 
 
 def get_last_page_accessed_data(course_list):
@@ -57,13 +58,8 @@ def get_last_page_accessed_data(course_list):
             )
             parent_tree_name = ''
             vertical_block_id = ''
-            user_role = 'student'
 
             if last_completed_child_position:
-                user_course_role = course_access_role().objects.filter(
-                    user=user,
-                    course_id=course_key
-                )
                 user_course_cohort = get_course_cohort(user=user, course_key=course_key)
                 user_course_teams = get_course_teams(membership__user=user, course_id=course_key)
                 vertical_blocks = blocks.topological_traversal(
@@ -78,14 +74,11 @@ def get_last_page_accessed_data(course_list):
                             component_parent = blocks.get_parents(component)
                             vertical_block_id = component_parent[0].block_id
 
-                if user_course_role:
-                    user_role = '-'.join([getattr(role, 'role', '') for role in user_course_role])
-
                 user_data.append({
                     'username': user.username,
-                    'user_role': user_role,
+                    'user_role': get_user_role(user, course_key),
                     'user_cohort': user_course_cohort.name if user_course_cohort else '',
-                    'user_teams': user_course_teams.name if user_course_teams else '',
+                    'user_teams': user_course_teams[0].name if user_course_teams else '',
                     'last_time_accessed': str(last_completed_child_position.modified),
                     'last_page_viewed': parent_tree_name,
                     'block_id': last_completed_child_position.block_key.block_id,
@@ -196,21 +189,3 @@ def get_exit_count_data(last_page_data, course_list):
             course_unit_data[course_id] = course_block_data
 
     return course_unit_data
-
-
-def get_staff_user(course_key):
-    """
-    Returns the first staff user, to get the course structure.
-
-    Args:
-        course_key: Course key string.
-    Returns:
-        The first staff user of the course.
-    """
-    staff_user = User.objects.filter(
-        courseenrollment__course_id=course_key,
-        courseenrollment__is_active=1,
-        courseaccessrole__role='staff',
-    ).first()
-
-    return staff_user
