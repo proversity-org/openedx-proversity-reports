@@ -7,8 +7,10 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
+from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
+from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_has_role, get_course_staff_role
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role
 
 
 def get_last_page_accessed_data(course_list):
@@ -34,29 +36,36 @@ def get_last_page_accessed_data(course_list):
         except InvalidKeyError:
             continue
 
-        # Getting all students enrolled in the course except staff users
-        enrolled_students = User.objects.filter(
+        # Getting all users enrolled in the course.
+        enrolled_users = User.objects.filter(
             courseenrollment__course_id=course_key,
             courseenrollment__is_active=1,
-            is_staff=0,
         )
+        staff_user = get_staff_user(course_key)
 
-        if not enrolled_students:
+        if not staff_user and enrolled_users:
             continue
 
         user_data = []
-
         usage_key = get_modulestore().make_course_usage_key(course_key)
-        blocks = get_course_blocks(enrolled_students[0], usage_key)
+        blocks = get_course_blocks(staff_user, usage_key)
 
-        for user in enrolled_students:
-            if user_has_role(user, get_course_staff_role(course_key)):
-                continue
-            last_completed_child_position = BlockCompletion.get_latest_block_completed(user, course_key)
+        for user in enrolled_users:
+            last_completed_child_position = BlockCompletion.get_latest_block_completed(
+                user,
+                course_key
+            )
             parent_tree_name = ''
             vertical_block_id = ''
+            user_role = 'student'
 
             if last_completed_child_position:
+                user_course_role = course_access_role().objects.filter(
+                    user=user,
+                    course_id=course_key
+                )
+                user_course_cohort = get_course_cohort(user=user, course_key=course_key)
+                user_course_teams = get_course_teams(membership__user=user, course_id=course_key)
                 vertical_blocks = blocks.topological_traversal(
                     filter_func=lambda block_key: block_key.block_type == 'vertical',
                     yield_descendants_of_unyielded=True,
@@ -69,8 +78,14 @@ def get_last_page_accessed_data(course_list):
                             component_parent = blocks.get_parents(component)
                             vertical_block_id = component_parent[0].block_id
 
+                if user_course_role:
+                    user_role = '-'.join([getattr(role, 'role', '') for role in user_course_role])
+
                 user_data.append({
                     'username': user.username,
+                    'user_role': user_role,
+                    'user_cohort': user_course_cohort.name if user_course_cohort else '',
+                    'user_teams': user_course_teams.name if user_course_teams else '',
                     'last_time_accessed': str(last_completed_child_position.modified),
                     'last_page_viewed': parent_tree_name,
                     'block_id': last_completed_child_position.block_key.block_id,
@@ -130,18 +145,13 @@ def get_exit_count_data(last_page_data, course_list):
         except InvalidKeyError:
             continue
 
-        # Getting all students enrolled in the course except staff users
-        enrolled_students = User.objects.filter(
-            courseenrollment__course_id=course_key,
-            courseenrollment__is_active=1,
-            is_staff=0,
-        )
+        staff_user = get_staff_user(course_key)
 
-        if not enrolled_students:
+        if not staff_user:
             continue
 
         usage_key = get_modulestore().make_course_usage_key(course_key)
-        blocks = get_course_blocks(enrolled_students[0], usage_key)
+        blocks = get_course_blocks(staff_user, usage_key)
         course_block_data = []
 
         course_last_page_data = last_page_data.get(course_id)
@@ -151,6 +161,7 @@ def get_exit_count_data(last_page_data, course_list):
             chapter_name = ''
             sequential_name = ''
             vertical_name = ''
+            incremental_vertical_position = 0
 
             for block in course_blocks:
                 if block.block_type == 'chapter':
@@ -163,11 +174,14 @@ def get_exit_count_data(last_page_data, course_list):
                     vertical_name = blocks.get_xblock_field(block, 'display_name')
                     vertical_id = block.block_id
                     page_title = '-'.join([chapter_name, sequential_name, vertical_name])
+                    # The vertical position must be only incremental.
+                    incremental_vertical_position += 1
 
                     course_block_data.append({
                         'page_title': unicode(page_title),
                         'vertical_id': vertical_id,
                         'exit_count': 0,
+                        'vertical_position': incremental_vertical_position,
                     })
 
         if course_block_data:
@@ -182,3 +196,21 @@ def get_exit_count_data(last_page_data, course_list):
             course_unit_data[course_id] = course_block_data
 
     return course_unit_data
+
+
+def get_staff_user(course_key):
+    """
+    Returns the first staff user, to get the course structure.
+
+    Args:
+        course_key: Course key string.
+    Returns:
+        The first staff user of the course.
+    """
+    staff_user = User.objects.filter(
+        courseenrollment__course_id=course_key,
+        courseenrollment__is_active=1,
+        courseaccessrole__role='staff',
+    ).first()
+
+    return staff_user
