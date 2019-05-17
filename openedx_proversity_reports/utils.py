@@ -3,6 +3,8 @@
 """
 Utils file for Openedx Proversity Reports.
 """
+import copy
+
 from completion.models import BlockCompletion
 
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
@@ -50,10 +52,11 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
 
     data = []
     for user in users:
+        block_data = copy.deepcopy(root_block)
         if user_has_role(user, get_course_staff_role(course_key)):
             continue
-        mark_blocks_completed(root_block, user, course_key)
-        sections = root_block.get('children', [])
+        mark_blocks_completed(block_data, user, course_key)
+        sections = block_data.get('children', [])
         cohort = get_course_cohort(user=user, course_key=course_key)
         user_teams = get_course_teams(membership__user=user, course_id=course_key)
 
