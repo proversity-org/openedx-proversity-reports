@@ -10,7 +10,6 @@ from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_cour
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role
 from openedx_proversity_reports.utils import get_staff_user, get_user_role
 
 
