@@ -4,15 +4,14 @@ Time spent reports.
 import logging
 
 from apiclient.discovery import build
-from completion.models import BlockCompletion
 from django.conf import settings
-from django.contrib.auth.models import User
 from google.oauth2 import service_account
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
+from openedx_proversity_reports.utils import get_staff_user
 
 
 ANALYTICS_API_SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
@@ -50,19 +49,13 @@ def get_time_spent_report_data(course_list):
             course_structure[course_id] = {}
             continue
 
-        # Getting just the first enrolled student in the course, except staff users.
-        enrolled_student = User.objects.filter(
-            courseenrollment__course_id=course_key,
-            courseenrollment__is_active=1,
-            courseaccessrole__id=None,
-            is_staff=0,
-        ).first()
+        staff_user = get_staff_user(course_key)
 
-        if not enrolled_student:
+        if not staff_user:
             continue
 
         usage_key = get_modulestore().make_course_usage_key(course_key)
-        blocks = get_course_blocks(enrolled_student, usage_key)
+        blocks = get_course_blocks(staff_user, usage_key)
         course_block_data = []
 
         course_blocks = list(blocks.topological_traversal())
@@ -217,7 +210,7 @@ def fetch_data_from_analytics(course_id):
                     if dimension_values:
                         # dimensions[0], since only one dimension is requested.
                         # dimension_values[0], it's the ga:pageviews number.
-                        # dimension_values[0], it's the ga:avgTimeOnPage time number in seconds.
+                        # dimension_values[1], it's the ga:avgTimeOnPage time number in seconds.
                         data.append({
                             'page_path': dimensions[0],
                             'page_views': dimension_values[0],
