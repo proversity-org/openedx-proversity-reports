@@ -168,7 +168,7 @@ def fetch_data_from_analytics(course_id):
                 'reportRequests': [{
                     'viewId': analytics_view_id,
                     'dateRanges': [
-                        {'startDate': 'yesterday', 'endDate': 'today'},
+                        {'startDate': '30DaysAgo', 'endDate': 'today'},
                     ],
                     'metrics': [
                         {'expression': 'ga:pageviews'},
