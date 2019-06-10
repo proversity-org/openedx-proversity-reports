@@ -61,7 +61,6 @@ def generate_report_as_list(users, course_key, block_report_filter, root_block):
 
         user_data = dict(
             username=user.username,
-            user_role=get_user_role(user, course_key),
             user_id=user.id,
             cohort=cohort.name if cohort else '',
             team=user_teams[0].name if user_teams else '',

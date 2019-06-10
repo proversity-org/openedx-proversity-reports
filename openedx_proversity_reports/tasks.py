@@ -11,7 +11,7 @@ from openedx_proversity_reports.reports.last_page_accessed import (
     get_exit_count_data,
 )
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
-from openedx_proversity_reports.utils import generate_report_as_list, get_root_block, get_staff_user
+from openedx_proversity_reports.utils import generate_report_as_list, get_root_block
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
@@ -30,13 +30,14 @@ def generate_completion_report(courses, block_report_filter):
         enrolled_users = User.objects.filter(
             courseenrollment__course_id=course_key,
             courseenrollment__is_active=1,
+            courseaccessrole__id=None,
+            is_staff=0,
         )
-        staff_user = get_staff_user(course_key)
 
-        if not staff_user and enrolled_users:
+        if not enrolled_users:
             break
 
-        block_root = get_root_block(staff_user, course_key)
+        block_root = get_root_block(enrolled_users.first(), course_key)
         course_data = generate_report_as_list(enrolled_users, course_key, block_report_filter, block_root)
 
         data[course_id] = course_data

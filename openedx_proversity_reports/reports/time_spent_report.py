@@ -5,13 +5,13 @@ import logging
 
 from apiclient.discovery import build
 from django.conf import settings
+from django.contrib.auth.models import User
 from google.oauth2 import service_account
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.utils import get_staff_user
 
 
 ANALYTICS_API_SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
@@ -49,19 +49,25 @@ def get_time_spent_report_data(course_list):
             course_structure[course_id] = {}
             continue
 
-        staff_user = get_staff_user(course_key)
+        # Getting just the first enrolled student in the course, except staff users.
+        enrolled_student = User.objects.filter(
+            courseenrollment__course_id=course_key,
+            courseenrollment__is_active=1,
+            courseaccessrole__id=None,
+            is_staff=0,
+        ).first()
 
-        if not staff_user:
+        if not enrolled_student:
             continue
 
         usage_key = get_modulestore().make_course_usage_key(course_key)
-        blocks = get_course_blocks(staff_user, usage_key)
+        blocks = get_course_blocks(enrolled_student, usage_key)
         course_block_data = []
 
         course_blocks = list(blocks.topological_traversal())
         chapter_name = ''
         chapter_id = ''
-        chapter_postion = 0
+        chapter_position = 0
         sequential_name = ''
         sequential_id = ''
         sequential_position = 0
@@ -76,7 +82,7 @@ def get_time_spent_report_data(course_list):
                 chapter_name = blocks.get_xblock_field(block, 'display_name')
                 chapter_id = block.block_id
                 sequential_position = 0
-                chapter_postion += 1
+                chapter_position += 1
             elif block.block_type == 'sequential':
                 sequential_name = blocks.get_xblock_field(block, 'display_name')
                 sequential_id = block.block_id
@@ -90,7 +96,7 @@ def get_time_spent_report_data(course_list):
                 course_block_data.append({
                     'chapter_name': chapter_name,
                     'chapter_id': chapter_id,
-                    'chapter_position': chapter_postion,
+                    'chapter_position': chapter_position,
                     'sequential_name': sequential_name,
                     'sequential_id': sequential_id,
                     'sequential_position': sequential_position,
