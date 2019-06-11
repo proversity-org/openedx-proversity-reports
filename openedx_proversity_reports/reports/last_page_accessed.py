@@ -10,7 +10,6 @@ from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_cour
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.utils import get_staff_user, get_user_role
 
 
 def get_last_page_accessed_data(course_list):
@@ -36,21 +35,22 @@ def get_last_page_accessed_data(course_list):
         except InvalidKeyError:
             continue
 
-        # Getting all users enrolled in the course.
-        enrolled_users = User.objects.filter(
+        # Getting all students enrolled in the course except staff users
+        enrolled_students = User.objects.filter(
             courseenrollment__course_id=course_key,
             courseenrollment__is_active=1,
+            courseaccessrole__id=None,
+            is_staff=0,
         )
-        staff_user = get_staff_user(course_key)
 
-        if not staff_user and enrolled_users:
+        if not enrolled_students:
             continue
 
         user_data = []
         usage_key = get_modulestore().make_course_usage_key(course_key)
-        blocks = get_course_blocks(staff_user, usage_key)
+        blocks = get_course_blocks(enrolled_students.first(), usage_key)
 
-        for user in enrolled_users:
+        for user in enrolled_students:
             last_completed_child_position = BlockCompletion.get_latest_block_completed(
                 user,
                 course_key
@@ -75,7 +75,6 @@ def get_last_page_accessed_data(course_list):
 
                 user_data.append({
                     'username': user.username,
-                    'user_role': get_user_role(user, course_key),
                     'user_cohort': user_course_cohort.name if user_course_cohort else '',
                     'user_teams': user_course_teams[0].name if user_course_teams else '',
                     'last_time_accessed': str(last_completed_child_position.modified),
@@ -137,13 +136,19 @@ def get_exit_count_data(last_page_data, course_list):
         except InvalidKeyError:
             continue
 
-        staff_user = get_staff_user(course_key)
+        # Getting just the first enrolled user except staff users.
+        enrolled_student = User.objects.filter(
+            courseenrollment__course_id=course_key,
+            courseenrollment__is_active=1,
+            courseaccessrole__id=None,
+            is_staff=0,
+        ).first()
 
-        if not staff_user:
+        if not enrolled_student:
             continue
 
         usage_key = get_modulestore().make_course_usage_key(course_key)
-        blocks = get_course_blocks(staff_user, usage_key)
+        blocks = get_course_blocks(enrolled_student, usage_key)
         course_block_data = []
 
         course_last_page_data = last_page_data.get(course_id)
@@ -151,6 +156,7 @@ def get_exit_count_data(last_page_data, course_list):
             course_blocks = blocks.topological_traversal()
             course_blocks = list(course_blocks)
             chapter_name = ''
+            chapter_position = 0
             sequential_name = ''
             vertical_name = ''
             incremental_vertical_position = 0
@@ -158,6 +164,7 @@ def get_exit_count_data(last_page_data, course_list):
             for block in course_blocks:
                 if block.block_type == 'chapter':
                     chapter_name = blocks.get_xblock_field(block, 'display_name')
+                    chapter_position += 1
                     continue
                 if block.block_type == 'sequential':
                     sequential_name = blocks.get_xblock_field(block, 'display_name')
@@ -174,6 +181,7 @@ def get_exit_count_data(last_page_data, course_list):
                         'vertical_id': vertical_id,
                         'exit_count': 0,
                         'vertical_position': incremental_vertical_position,
+                        'chapter_name': '{}-{}'.format(chapter_position, chapter_name),
                     })
 
         if course_block_data:
