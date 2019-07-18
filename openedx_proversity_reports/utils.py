@@ -5,9 +5,9 @@ Utils file for Openedx Proversity Reports.
 """
 import copy
 
-from completion.models import BlockCompletion
 from django.contrib.auth.models import User
 
+from openedx_proversity_reports.edxapp_wrapper.get_completion_models import get_block_completion_model
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
@@ -176,11 +176,11 @@ def mark_blocks_completed(block, user, course_key):
     Walk course tree, marking block completion.
     Mark 'most recent completed block as 'resume_block'
     """
-    last_completed_child_position = BlockCompletion.get_latest_block_completed(user, course_key)
+    last_completed_child_position = get_block_completion_model().get_latest_block_completed(user, course_key)
 
     if last_completed_child_position:
         recurse_mark_complete(
-            course_block_completions=BlockCompletion.get_course_completions(user, course_key),
+            course_block_completions=get_block_completion_model().get_course_completions(user, course_key),
             latest_completion=last_completed_child_position,
             block=block
         )
@@ -198,7 +198,7 @@ def recurse_mark_complete(course_block_completions, latest_completion, block):
 
     if course_block_completions.get(block_key):
         block['complete'] = True
-        if block_key == latest_completion.full_block_key:
+        if block_key == latest_completion.block_key:
             block['resume_block'] = True
 
     if block.get('children'):

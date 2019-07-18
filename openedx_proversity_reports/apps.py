@@ -28,3 +28,7 @@ class OpenEdxProversityReportsConfig(AppConfig):
             },
         },
     }
+
+    def ready(self):
+        # The line below allows tasks defined in this app to be included by celery workers
+        from .tasks import *  # pylint: disable=unused-variable

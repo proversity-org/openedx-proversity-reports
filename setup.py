@@ -6,6 +6,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import re
+import subprocess
 
 from setuptools import setup
 
@@ -24,17 +25,26 @@ def get_version():
     raise RuntimeError('Unable to find version string in %s.' % (file_path,))
 
 
-def load_requirements(*requirements_paths):
+def load_requirements(requirements_folder):
     """
     Load all requirements from the specified requirements files.
     Returns a list of requirement strings.
     """
+    edx_platform_version = get_edx_platform_version()
+
+    if edx_platform_version == 0.9:
+        requirements_path = '{}/{}'.format(requirements_folder, 'ginkgo.in')
+    elif edx_platform_version == 0.10:
+        requirements_path = '{}/{}'.format(requirements_folder, 'hawthorn.in')
+    else:
+        requirements_path = '{}/{}'.format(requirements_folder, 'ironwood.in')
+
     requirements = set()
-    for path in requirements_paths:
-        requirements.update(
-            line.split('#')[0].strip() for line in open(path).readlines()
-            if is_requirement(line)
-        )
+    requirements.update(
+        line.split('#')[0].strip() for line in open(requirements_path).readlines()
+        if is_requirement(line)
+    )
+
     return list(requirements)
 
 
@@ -57,6 +67,26 @@ def is_requirement(line):
     )
 
 
+def get_edx_platform_version():
+    """
+    Returns the pip package version for Open-edX
+    """
+    file_name = 'open_edx_version.txt'
+    command = 'pip show Open-edX > {}'.format(file_name)
+    subprocess.call(command, shell=True)
+    version = 0.0
+
+    with open(file_name, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if line.startswith('Version'):
+                name, version = line.split(': ')
+                version = float(version)
+
+    os.remove(file_name)
+    return version
+
+
 setup(
     name='openedx-proversity-reports',
     version=get_version(),
@@ -71,5 +101,5 @@ setup(
         ],
     },
     include_package_data=True,
-    install_requires=load_requirements('requirements.in'),
+    install_requires=load_requirements('requirements'),
 )

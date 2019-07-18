@@ -1,11 +1,11 @@
 """
 Last page accessed reports.
 """
-from completion.models import BlockCompletion
 from django.contrib.auth.models import User
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
+from openedx_proversity_reports.edxapp_wrapper.get_completion_models import get_block_completion_model
 from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_course_blocks
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
@@ -51,7 +51,7 @@ def get_last_page_accessed_data(course_list):
         blocks = get_course_blocks(enrolled_students.first(), usage_key)
 
         for user in enrolled_students:
-            last_completed_child_position = BlockCompletion.get_latest_block_completed(
+            last_completed_child_position = get_block_completion_model().get_latest_block_completed(
                 user,
                 course_key
             )
