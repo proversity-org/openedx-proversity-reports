@@ -1,4 +1,4 @@
-Django<2.0
+Django==1.8.18
 pylint==1.7.6
 bumpversion==0.5.3
 pycodestyle==2.5.0
