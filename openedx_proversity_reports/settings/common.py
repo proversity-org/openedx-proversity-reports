@@ -39,6 +39,7 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    settings.OPR_CERTIFICATES_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.certificates_models_i_v1'
     settings.OPR_COMPLETION_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.completion_models_i_v1'
     settings.OPR_COURSE_BLOCKS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_blocks_i_v1'
     settings.OPR_COURSE_COHORT = 'openedx_proversity_reports.edxapp_wrapper.backends.course_cohort_i_v1'

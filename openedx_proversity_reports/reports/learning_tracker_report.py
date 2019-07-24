@@ -7,6 +7,10 @@ from django.contrib.auth.models import User
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
+from openedx_proversity_reports.edxapp_wrapper.get_certificates_models import (
+    get_certificate_statuses,
+    get_certificate_status_for_student
+)
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_grade_factory import get_course_grade_factory
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
@@ -114,4 +118,9 @@ class LearningTrackerReport(object):
         Returns:
             Boolean (True/False).
         """
+        certificate = get_certificate_status_for_student(user, self.course_key)
+
+        if certificate.get('status') in get_certificate_statuses().PASSED_STATUSES:
+            return True
+
         return False
