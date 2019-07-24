@@ -23,6 +23,11 @@ def plugin_settings(settings):
         settings.OPR_COURSE_COHORT
     )
 
+    settings.OPR_COURSE_GRADE_FACTORY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_GRADE_FACTORY',
+        settings.OPR_COURSE_GRADE_FACTORY
+    )
+
     settings.OPR_COURSE_TEAMS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_COURSE_TEAMS',
         settings.OPR_COURSE_TEAMS
