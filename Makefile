@@ -14,8 +14,14 @@ clean: ## delete most git-ignored files
 	find . -name '__pycache__' -exec rm -rf {} +
 	find . -name '*.pyc' -exec rm -f {} +
 
-requirements: ## install environment requirements
-	pip install -r requirements.txt
+requirements-ginkgo: ## install environment requirements
+	pip install -r requirements/ginkgo.txt
+
+requirements-hawthorn: ## install environment requirements
+	pip install -r requirements/hawthorn.txt
+
+requirements-ironwood: ## install environment requirements
+	pip install -r requirements/ironwood.txt
 
 run-quality-test: clean ## Run quality test.
 	pylint ./openedx_proversity_reports --rcfile=./setup.cfg

@@ -8,6 +8,11 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    settings.OPR_COMPLETION_MODELS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COMPLETION_MODELS',
+        settings.OPR_COMPLETION_MODELS
+    )
+
     settings.OPR_COURSE_BLOCKS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_COURSE_BLOCKS',
         settings.OPR_COURSE_BLOCKS
