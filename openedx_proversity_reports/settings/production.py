@@ -63,6 +63,11 @@ def plugin_settings(settings):
         settings.OPR_SUPPORTED_FIELDS
     )
 
+    settings.OPR_SUPPORTED_TASKS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_SUPPORTED_TASKS',
+        settings.OPR_SUPPORTED_TASKS
+    )
+
     settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_GOOGLE_ANALYTICS_VIEW_ID',
         settings.OPR_GOOGLE_ANALYTICS_VIEW_ID

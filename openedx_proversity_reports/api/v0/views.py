@@ -4,7 +4,9 @@ This file contains the views for openedx-proversity-reports
 import logging
 
 from celery.result import AsyncResult
+from django.conf import settings
 from django.http import JsonResponse, Http404
+from importlib import import_module
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -13,25 +15,15 @@ from rest_framework_oauth.authentication import OAuth2Authentication
 
 from openedx_proversity_reports.edxapp_wrapper.get_edx_rest_framework_extensions import get_jwt_authentication
 from openedx_proversity_reports.edxapp_wrapper.get_openedx_permissions import get_staff_or_owner
-from openedx_proversity_reports.tasks import (
-    generate_completion_report,
-    generate_last_page_accessed_report,
-    generate_time_spent_report,
-    generate_learning_tracker_report,
-)
 
 logger = logging.getLogger(__name__)
-TASKS = {
-    'generate-completion-report': generate_completion_report,
-    'generate-last-page-accessed-report': generate_last_page_accessed_report,
-    'generate-time-spent-report': generate_time_spent_report,
-    'generate-learning-tracker-report': generate_learning_tracker_report
-}
+BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
+SUPPORTED_TASKS_MODULE = 'openedx_proversity_reports.tasks'
 
 
 class GenerateReportView(APIView):
     """
-    This class allows to initialize a celery task in order to generate completion reports.
+    This class allows to initialize a celery task in order to generate reports.
     """
 
     authentication_classes = (
@@ -42,8 +34,7 @@ class GenerateReportView(APIView):
 
     def post(self, request, report_name):
         """
-        This method starts a celery task that generates a report with the information about
-        the required activities and its state.
+        This method starts a general task in order to build reports using the platform data.
 
         **Params**
 
@@ -80,10 +71,11 @@ class GenerateReportView(APIView):
             * message: Response message.
 
         """
+        report_name = report_name.replace('-', '_')
+        task_module = import_module(SUPPORTED_TASKS_MODULE)
+        task = getattr(task_module, report_name, None)
 
-        task = TASKS.get(report_name)
-
-        if not task:
+        if not (report_name in settings.OPR_SUPPORTED_TASKS or task):
             raise Http404
 
         courses = request.data.get("course_ids", [])
@@ -103,7 +95,7 @@ class GenerateReportView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        block_report_filter = request.data.get("block_report_filter", ["vertical"])
+        block_report_filter = request.data.get("block_report_filter", BLOCK_DEFAULT_REPORT_FILTER)
 
         task = task.delay(courses, block_report_filter=block_report_filter)
         state_url = request.build_absolute_uri(reverse('proversity-reports:api:v0:get-report-data'))

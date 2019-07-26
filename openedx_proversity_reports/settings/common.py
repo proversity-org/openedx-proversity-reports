@@ -52,3 +52,10 @@ def plugin_settings(settings):
     settings.OPR_SUPPORTED_FIELDS = 'openedx_proversity_reports.edxapp_wrapper.backends.supported_fields_i_v1'
     settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS = {}
     settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = ''
+
+    settings.OPR_SUPPORTED_TASKS = [
+        'generate_completion_report',
+        'generate_last_page-accessed_report',
+        'generate_time_spent_report',
+        'generate_learning_tracker_report',
+    ]

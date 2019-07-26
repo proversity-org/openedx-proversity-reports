@@ -8,7 +8,6 @@ from . import views
 REPORT_NAME_PATTERN = r'(?P<report_name>(generate)+[a-z-]+)'
 
 urlpatterns = [
-
     url(
         r'^{report_name_pattern}$'.format(
             report_name_pattern=REPORT_NAME_PATTERN,

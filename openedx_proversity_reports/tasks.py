@@ -99,7 +99,6 @@ def generate_learning_tracker_report(courses, *args, **kwargs):
     data = {}
 
     for course in courses:
-
         try:
             data[course] = LearningTrackerReport(course).generate_report()
         except InvalidKeyError:

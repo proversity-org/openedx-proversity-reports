@@ -1,9 +1,8 @@
 """
-Learning Tracker Report Class
+Learning Tracker Report Class.
 """
 import logging
 
-from django.contrib.auth.models import User
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
@@ -14,6 +13,7 @@ from openedx_proversity_reports.edxapp_wrapper.get_certificates_models import (
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_grade_factory import get_course_grade_factory
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
+from openedx_proversity_reports.utils import get_enrolled_users
 
 
 LOG = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 class LearningTrackerReport(object):
     """
-    Learning Tracker Report Class
+    Learning Tracker Report Class.
     """
 
     def __init__(self, course_id):
@@ -35,20 +35,13 @@ class LearningTrackerReport(object):
         """
         Returns a List with the metric for every user in the course.
         """
-        enrolled_users = User.objects.filter(
-            courseenrollment__course_id=self.course_key,
-            courseenrollment__is_active=1,
-            courseaccessrole__id=None,
-            is_staff=0,
-        )
-
+        enrolled_users = get_enrolled_users(self.course_key)
         report_data = []
 
         if not enrolled_users:
             return report_data
 
         for user in enrolled_users:
-
             cohort = get_course_cohort(user=user, course_key=self.course_key)
             teams = get_course_teams(membership__user=user, course_id=self.course_key)
 
@@ -88,6 +81,7 @@ class LearningTrackerReport(object):
             Float (cumulative_grade).
         """
         course_grade = get_course_grade_factory().read(user=user, course_key=self.course_key)
+
         return course_grade.percent
 
     def _get_time_bewteen_sessions(self, user):
