@@ -2,7 +2,10 @@
 Learning Tracker Report Class.
 """
 import logging
+import six
+from datetime import timedelta
 
+from django.utils.functional import cached_property
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
@@ -31,6 +34,20 @@ class LearningTrackerReport(object):
             LOG.error('Invalid course_id = %s for learning tracker report', course_id)
             raise InvalidKeyError
 
+    @cached_property
+    def assignments_data(self):
+        """
+        """
+        from lms.djangoapps.grades.context import grading_context
+        from lms.djangoapps.courseware.courses import get_course_by_id
+
+        from openedx.core.djangoapps.content.block_structure.api import get_course_in_cache
+
+        blocks = get_course_in_cache(self.course_key)
+        assignments_data = grading_context(get_course_by_id(self.course_key), blocks)
+
+        return assignments_data.get('all_graded_subsections_by_type', {})
+
     def generate_report(self):
         """
         Returns a List with the metric for every user in the course.
@@ -56,6 +73,8 @@ class LearningTrackerReport(object):
                 'has_verified_certificate': self._has_verified_certificate(user),
                 'time_bewteen_sessions': self._get_time_bewteen_sessions(user),
                 'weekly_clicks': self._get_weekly_clicks(user),
+                'number_of_graded_assessment': self._get_number_of_graded_assessment(user),
+                'timeliness_of_submissions': self._get_timeliness_of_submissions(user),
             }
 
             report_data.append(user_data)
@@ -84,6 +103,31 @@ class LearningTrackerReport(object):
 
         return course_grade.percent
 
+    def _get_number_of_graded_assessment(self, user):
+        """
+        Number of graded assignment submissions.
+        Args:
+            user: User Model.
+        Returns:
+            Int (Number of graded subsection that has an associated assignment type).
+        """
+        course_grade = get_course_grade_factory().read(user=user, course_key=self.course_key)
+        count = 0
+
+        for assignment_name, subsections_info in six.iteritems(self.assignments_data):
+            for subsection_info in subsections_info:
+                subsection = subsection_info.get('subsection_block')
+
+                if not subsection:
+                    continue
+
+                subsection_grade = course_grade.subsection_grade(subsection.location)
+
+                if subsection_grade.attempted_graded:
+                    count += 1
+
+        return count
+
     def _get_time_bewteen_sessions(self, user):
         """
         Calculate learner metrics for "Time between sessions".
@@ -93,6 +137,33 @@ class LearningTrackerReport(object):
             Float (Time between sessions).
         """
         return 0
+
+    def _get_timeliness_of_submissions(self, user):
+        """
+        The number of days that user submits assignments before the posted due date.
+        Args:
+            user: User Model.
+        Returns:
+            Int (Number of days).
+        """
+        course_grade = get_course_grade_factory().read(user=user, course_key=self.course_key)
+
+        submissions_timeliness = timedelta()
+
+        for assignment_name, subsections_info in six.iteritems(self.assignments_data):
+            for subsection_info in subsections_info:
+                subsection = subsection_info.get('subsection_block')
+
+                if not subsection:
+                    continue
+
+                subsection_grade = course_grade.subsection_grade(subsection.location)
+                first_attempted = subsection_grade.all_total.first_attempted
+
+                if subsection_grade.attempted_graded and subsection.due and first_attempted:
+                    submissions_timeliness += subsection.due - first_attempted
+
+        return submissions_timeliness.days
 
     def _get_weekly_clicks(self, user):
         """
