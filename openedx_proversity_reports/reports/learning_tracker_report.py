@@ -9,13 +9,18 @@ from django.utils.functional import cached_property
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
+from openedx_proversity_reports.edxapp_wrapper.get_block_structure_library import get_course_in_cache
 from openedx_proversity_reports.edxapp_wrapper.get_certificates_models import (
     get_certificate_statuses,
     get_certificate_status_for_student
 )
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
-from openedx_proversity_reports.edxapp_wrapper.get_course_grade_factory import get_course_grade_factory
+from openedx_proversity_reports.edxapp_wrapper.get_course_grade_library import (
+    get_course_grade_factory,
+    get_grading_context
+)
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
+from openedx_proversity_reports.edxapp_wrapper.get_courseware_library import get_course_by_id
 from openedx_proversity_reports.utils import get_enrolled_users
 
 
@@ -37,14 +42,10 @@ class LearningTrackerReport(object):
     @cached_property
     def assignments_data(self):
         """
+        Cached property that returns the block structure.
         """
-        from lms.djangoapps.grades.context import grading_context
-        from lms.djangoapps.courseware.courses import get_course_by_id
-
-        from openedx.core.djangoapps.content.block_structure.api import get_course_in_cache
-
         blocks = get_course_in_cache(self.course_key)
-        assignments_data = grading_context(get_course_by_id(self.course_key), blocks)
+        assignments_data = get_grading_context(get_course_by_id(self.course_key), blocks)
 
         return assignments_data.get('all_graded_subsections_by_type', {})
 
