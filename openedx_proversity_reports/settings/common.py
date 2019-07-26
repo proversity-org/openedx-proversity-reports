@@ -39,9 +39,11 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    settings.OPR_CERTIFICATES_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.certificates_models_i_v1'
     settings.OPR_COMPLETION_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.completion_models_i_v1'
     settings.OPR_COURSE_BLOCKS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_blocks_i_v1'
     settings.OPR_COURSE_COHORT = 'openedx_proversity_reports.edxapp_wrapper.backends.course_cohort_i_v1'
+    settings.OPR_COURSE_GRADE_FACTORY = 'openedx_proversity_reports.edxapp_wrapper.backends.course_grade_factory_i_v1'
     settings.OPR_COURSE_TEAMS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_teams_i_v1'
     settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.edx_rest_framework_extensions_i_v1'  # pylint: disable=line-too-long
     settings.OPR_MODULESTORE = 'openedx_proversity_reports.edxapp_wrapper.backends.modulestore_i_v1'
@@ -50,3 +52,9 @@ def plugin_settings(settings):
     settings.OPR_SUPPORTED_FIELDS = 'openedx_proversity_reports.edxapp_wrapper.backends.supported_fields_i_v1'
     settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS = {}
     settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = ''
+    settings.OPR_SUPPORTED_TASKS = [
+        'generate_completion_report',
+        'generate_last_page-accessed_report',
+        'generate_time_spent_report',
+        'generate_learning_tracker_report',
+    ]

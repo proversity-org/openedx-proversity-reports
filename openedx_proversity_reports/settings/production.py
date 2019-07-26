@@ -8,6 +8,11 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    settings.OPR_CERTIFICATES_MODELS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_CERTIFICATES_MODELS',
+        settings.OPR_CERTIFICATES_MODELS
+    )
+
     settings.OPR_COMPLETION_MODELS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_COMPLETION_MODELS',
         settings.OPR_COMPLETION_MODELS
@@ -21,6 +26,11 @@ def plugin_settings(settings):
     settings.OPR_COURSE_COHORT = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_COURSE_COHORT',
         settings.OPR_COURSE_COHORT
+    )
+
+    settings.OPR_COURSE_GRADE_FACTORY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_GRADE_FACTORY',
+        settings.OPR_COURSE_GRADE_FACTORY
     )
 
     settings.OPR_COURSE_TEAMS = getattr(settings, 'ENV_TOKENS', {}).get(
@@ -51,6 +61,11 @@ def plugin_settings(settings):
     settings.OPR_SUPPORTED_FIELDS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_SUPPORTED_FIELDS',
         settings.OPR_SUPPORTED_FIELDS
+    )
+
+    settings.OPR_SUPPORTED_TASKS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_SUPPORTED_TASKS',
+        settings.OPR_SUPPORTED_TASKS
     )
 
     settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = getattr(settings, 'ENV_TOKENS', {}).get(

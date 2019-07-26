@@ -10,15 +10,17 @@ from openedx_proversity_reports.reports.last_page_accessed import (
     get_last_page_accessed_data,
     get_exit_count_data,
 )
+from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
 from openedx_proversity_reports.utils import generate_report_as_list, get_root_block
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
-def generate_completion_report(courses, block_report_filter):
+def generate_completion_report(courses, *args, **kwargs):
     """
     Return the completion data for the given courses
     """
+    block_report_filter = kwargs.get('block_report_filter', [])
     data = {}
     for course_id in courses:
         try:
@@ -46,7 +48,7 @@ def generate_completion_report(courses, block_report_filter):
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
-def generate_last_page_accessed_report(courses):
+def generate_last_page_accessed_report(courses, *args, **kwargs):
     """
     Return the last page accessed data for the given courses.
 
@@ -68,7 +70,7 @@ def generate_last_page_accessed_report(courses):
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
-def generate_time_spent_report(courses):
+def generate_time_spent_report(courses, *args, **kwargs):
     """
     Return the time spent data for the given courses.
 
@@ -82,3 +84,24 @@ def generate_time_spent_report(courses):
     return {
         'time_spent_data': time_spent_report_data if time_spent_report_data else {}
     }
+
+
+@task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
+def generate_learning_tracker_report(courses, *args, **kwargs):
+    """
+    Return the time spent data for the given courses.
+
+    Args:
+        courses: Course ids list.
+    Returns:
+        Dict with the data for every course.
+    """
+    data = {}
+
+    for course in courses:
+        try:
+            data[course] = LearningTrackerReport(course).generate_report()
+        except InvalidKeyError:
+            continue
+
+    return data
