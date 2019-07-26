@@ -4,6 +4,7 @@
 Utils file for Openedx Proversity Reports.
 """
 import copy
+from importlib import import_module
 
 from django.contrib.auth.models import User
 
@@ -272,3 +273,17 @@ def get_enrolled_users(course_key):
         courseaccessrole__id=None,
         is_staff=0,
     )
+
+
+def get_attribute_from_module(module, attribute_name):
+    """
+    Return the attribute for the given module path and attribute name.
+
+    Args:
+        module: String (Module path).
+        attribute_name: String (Module attribute).
+    Returns:
+        Module Attribute.
+    """
+    module = import_module(module)
+    return getattr(module, attribute_name, None)

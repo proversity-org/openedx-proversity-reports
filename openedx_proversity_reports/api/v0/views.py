@@ -6,7 +6,6 @@ import logging
 from celery.result import AsyncResult
 from django.conf import settings
 from django.http import JsonResponse, Http404
-from importlib import import_module
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -15,6 +14,7 @@ from rest_framework_oauth.authentication import OAuth2Authentication
 
 from openedx_proversity_reports.edxapp_wrapper.get_edx_rest_framework_extensions import get_jwt_authentication
 from openedx_proversity_reports.edxapp_wrapper.get_openedx_permissions import get_staff_or_owner
+from openedx_proversity_reports.utils import get_attribute_from_module
 
 logger = logging.getLogger(__name__)
 BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
@@ -72,8 +72,7 @@ class GenerateReportView(APIView):
 
         """
         report_name = report_name.replace('-', '_')
-        task_module = import_module(SUPPORTED_TASKS_MODULE)
-        task = getattr(task_module, report_name, None)
+        task = get_attribute_from_module(SUPPORTED_TASKS_MODULE, report_name)
 
         if not (report_name in settings.OPR_SUPPORTED_TASKS or task):
             raise Http404
