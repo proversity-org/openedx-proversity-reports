@@ -25,6 +25,7 @@ from openedx_proversity_reports.utils import get_enrolled_users
 
 
 LOG = logging.getLogger(__name__)
+KEY_SUBSECTION_BLOCK = 'subsection_block'
 
 
 class LearningTrackerReport(object):
@@ -72,7 +73,7 @@ class LearningTrackerReport(object):
                 'average_session_length': self._get_average_session_length(user),
                 'cumulative_grade': self._get_cumulative_grade(user),
                 'has_verified_certificate': self._has_verified_certificate(user),
-                'time_bewteen_sessions': self._get_time_bewteen_sessions(user),
+                'time_between_sessions': self._get_time_bewteen_sessions(user),
                 'weekly_clicks': self._get_weekly_clicks(user),
                 'number_of_graded_assessment': self._get_number_of_graded_assessment(user),
                 'timeliness_of_submissions': self._get_timeliness_of_submissions(user),
@@ -115,9 +116,9 @@ class LearningTrackerReport(object):
         course_grade = get_course_grade_factory().read(user=user, course_key=self.course_key)
         count = 0
 
-        for assignment_name, subsections_info in six.iteritems(self.assignments_data):
+        for subsections_info in six.itervalues(self.assignments_data):
             for subsection_info in subsections_info:
-                subsection = subsection_info.get('subsection_block')
+                subsection = subsection_info.get(KEY_SUBSECTION_BLOCK)
 
                 if not subsection:
                     continue
@@ -151,9 +152,9 @@ class LearningTrackerReport(object):
 
         submissions_timeliness = timedelta()
 
-        for assignment_name, subsections_info in six.iteritems(self.assignments_data):
+        for subsections_info in six.itervalues(self.assignments_data):
             for subsection_info in subsections_info:
-                subsection = subsection_info.get('subsection_block')
+                subsection = subsection_info.get(KEY_SUBSECTION_BLOCK)
 
                 if not subsection:
                     continue
