@@ -8,6 +8,11 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    settings.OPR_BLOCK_STRUCTURE_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_BLOCK_STRUCTURE_LIBRARY',
+        settings.OPR_BLOCK_STRUCTURE_LIBRARY
+    )
+
     settings.OPR_CERTIFICATES_MODELS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_CERTIFICATES_MODELS',
         settings.OPR_CERTIFICATES_MODELS
@@ -28,14 +33,19 @@ def plugin_settings(settings):
         settings.OPR_COURSE_COHORT
     )
 
-    settings.OPR_COURSE_GRADE_FACTORY = getattr(settings, 'ENV_TOKENS', {}).get(
-        'OPR_COURSE_GRADE_FACTORY',
-        settings.OPR_COURSE_GRADE_FACTORY
+    settings.OPR_COURSE_GRADE_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_GRADE_LIBRARY',
+        settings.OPR_COURSE_GRADE_LIBRARY
     )
 
     settings.OPR_COURSE_TEAMS = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_COURSE_TEAMS',
         settings.OPR_COURSE_TEAMS
+    )
+
+    settings.OPR_COURSEWARE_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSEWARE_LIBRARY',
+        settings.OPR_COURSEWARE_LIBRARY
     )
 
     settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = getattr(settings, 'ENV_TOKENS', {}).get(

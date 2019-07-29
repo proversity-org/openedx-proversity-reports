@@ -39,12 +39,14 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    settings.OPR_BLOCK_STRUCTURE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.block_structure_i_v1'
     settings.OPR_CERTIFICATES_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.certificates_models_i_v1'
     settings.OPR_COMPLETION_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.completion_models_i_v1'
     settings.OPR_COURSE_BLOCKS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_blocks_i_v1'
     settings.OPR_COURSE_COHORT = 'openedx_proversity_reports.edxapp_wrapper.backends.course_cohort_i_v1'
-    settings.OPR_COURSE_GRADE_FACTORY = 'openedx_proversity_reports.edxapp_wrapper.backends.course_grade_factory_i_v1'
+    settings.OPR_COURSE_GRADE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.course_grade_i_v1'
     settings.OPR_COURSE_TEAMS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_teams_i_v1'
+    settings.OPR_COURSEWARE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.courseware_i_v1'
     settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.edx_rest_framework_extensions_i_v1'  # pylint: disable=line-too-long
     settings.OPR_MODULESTORE = 'openedx_proversity_reports.edxapp_wrapper.backends.modulestore_i_v1'
     settings.OPR_OPENEDX_PERMISSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.openedx_permissions_i_v1'
