@@ -1,6 +1,7 @@
 """
 Learning Tracker Report Class.
 """
+import json
 import logging
 import six
 from datetime import timedelta
@@ -21,6 +22,7 @@ from openedx_proversity_reports.edxapp_wrapper.get_course_grade_library import (
 )
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_courseware_library import get_course_by_id
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import get_user_profile
 from openedx_proversity_reports.utils import get_enrolled_users
 
 
@@ -91,7 +93,13 @@ class LearningTrackerReport(object):
         Returns:
             Float (Average Session Length).
         """
-        return 0
+        user_profile = get_user_profile().objects.get(user_id=user.id)
+
+        try:
+            meta = json.loads(user_profile.meta)
+            return float(meta.get('avg_session', 0))
+        except ValueError:
+            return 0
 
     def _get_cumulative_grade(self, user):
         """
@@ -138,7 +146,13 @@ class LearningTrackerReport(object):
         Returns:
             Float (Time between sessions).
         """
-        return 0
+        user_profile = get_user_profile().objects.get(user_id=user.id)
+
+        try:
+            meta = json.loads(user_profile.meta)
+            return float(meta.get('time_between_sessions', 0))
+        except ValueError:
+            return 0
 
     def _get_timeliness_of_submissions(self, user):
         """

@@ -87,3 +87,12 @@ def plugin_settings(settings):
         'OPR_GOOGLE_ANALYTICS_CREDENTIALS',
         settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS
     )
+
+    settings.OPR_TIME_BETWEEN_SESSIONS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_TIME_BETWEEN_SESSIONS',
+        settings.OPR_TIME_BETWEEN_SESSIONS
+    )
+    if settings.SERVICE_VARIANT == "lms":
+        settings.MIDDLEWARE_CLASSES += [
+            'openedx_proversity_reports.middleware.UserSessionMiddleware',
+        ]

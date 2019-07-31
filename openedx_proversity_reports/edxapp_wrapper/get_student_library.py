@@ -28,3 +28,12 @@ def course_access_role():
     backend = import_module(backend_function)
 
     return backend.course_access_role()
+
+
+def get_user_profile():
+    """ Get UserProfile model. """
+
+    backend_function = settings.OPR_STUDENT_LIBRARY
+    backend = import_module(backend_function)
+
+    return backend.user_profile()
