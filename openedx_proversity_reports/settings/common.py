@@ -60,3 +60,4 @@ def plugin_settings(settings):
         'generate_time_spent_report',
         'generate_learning_tracker_report',
     ]
+    settings.OPR_TIME_BETWEEN_SESSIONS = 5  # This value is in minutes.
