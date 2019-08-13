@@ -39,6 +39,7 @@ def plugin_settings(settings):
     Set of plugin settings used by the Open Edx platform.
     More info: https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/plugins/README.rst
     """
+    # pylint: disable=line-too-long
     settings.OPR_BLOCK_STRUCTURE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.block_structure_i_v1'
     settings.OPR_CERTIFICATES_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.certificates_models_i_v1'
     settings.OPR_COMPLETION_MODELS = 'openedx_proversity_reports.edxapp_wrapper.backends.completion_models_i_v1'
@@ -47,9 +48,10 @@ def plugin_settings(settings):
     settings.OPR_COURSE_GRADE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.course_grade_i_v1'
     settings.OPR_COURSE_TEAMS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_teams_i_v1'
     settings.OPR_COURSEWARE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.courseware_i_v1'
-    settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.edx_rest_framework_extensions_i_v1'  # pylint: disable=line-too-long
+    settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.edx_rest_framework_extensions_g_v1'
     settings.OPR_MODULESTORE = 'openedx_proversity_reports.edxapp_wrapper.backends.modulestore_i_v1'
     settings.OPR_OPENEDX_PERMISSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.openedx_permissions_i_v1'
+    settings.OPR_STUDENT_ACCOUNT_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.student_account_g_v1'
     settings.OPR_STUDENT_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.student_i_v1'
     settings.OPR_SUPPORTED_FIELDS = 'openedx_proversity_reports.edxapp_wrapper.backends.supported_fields_i_v1'
     settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS = {}
@@ -59,5 +61,6 @@ def plugin_settings(settings):
         'generate_last_page-accessed_report',
         'generate_time_spent_report',
         'generate_learning_tracker_report',
+        'generate_enrollment_report',
     ]
     settings.OPR_TIME_BETWEEN_SESSIONS = 5  # This value is in minutes.

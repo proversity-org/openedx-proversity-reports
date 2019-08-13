@@ -63,6 +63,11 @@ def plugin_settings(settings):
         settings.OPR_OPENEDX_PERMISSIONS
     )
 
+    settings.OPR_STUDENT_ACCOUNT_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_STUDENT_ACCOUNT_LIBRARY',
+        settings.OPR_STUDENT_ACCOUNT_LIBRARY
+    )
+
     settings.OPR_STUDENT_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
         'OPR_STUDENT_LIBRARY',
         settings.OPR_STUDENT_LIBRARY
