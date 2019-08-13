@@ -37,3 +37,12 @@ def get_user_profile():
     backend = import_module(backend_function)
 
     return backend.user_profile()
+
+
+def get_course_enrollment():
+    """ Get CourseEnrollment model. """
+
+    backend_function = settings.OPR_STUDENT_LIBRARY
+    backend = import_module(backend_function)
+
+    return backend.course_enrollment()

@@ -17,7 +17,6 @@ from openedx_proversity_reports.edxapp_wrapper.get_openedx_permissions import ge
 from openedx_proversity_reports.utils import get_attribute_from_module
 
 logger = logging.getLogger(__name__)
-BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
 SUPPORTED_TASKS_MODULE = 'openedx_proversity_reports.tasks'
 
 
@@ -94,9 +93,7 @@ class GenerateReportView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        block_report_filter = request.data.get("block_report_filter", BLOCK_DEFAULT_REPORT_FILTER)
-
-        task = task.delay(courses, block_report_filter=block_report_filter)
+        task = task.delay(courses, **request.data)
         state_url = request.build_absolute_uri(reverse('proversity-reports:api:v0:get-report-data'))
 
         logger.info("The task with id = %s has been initialize.", task.id)

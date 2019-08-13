@@ -10,9 +10,12 @@ from openedx_proversity_reports.reports.last_page_accessed import (
     get_last_page_accessed_data,
     get_exit_count_data,
 )
+from openedx_proversity_reports.reports.enrollment_report import EnrollmentReport
 from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
 from openedx_proversity_reports.utils import generate_report_as_list, get_root_block
+
+BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
@@ -20,7 +23,7 @@ def generate_completion_report(courses, *args, **kwargs):
     """
     Return the completion data for the given courses
     """
-    block_report_filter = kwargs.get('block_report_filter', [])
+    block_report_filter = kwargs.get('block_report_filter', BLOCK_DEFAULT_REPORT_FILTER)
     data = {}
     for course_id in courses:
         try:
@@ -101,6 +104,27 @@ def generate_learning_tracker_report(courses, *args, **kwargs):
     for course in courses:
         try:
             data[course] = LearningTrackerReport(course).generate_report()
+        except InvalidKeyError:
+            continue
+
+    return data
+
+
+@task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
+def generate_enrollment_report(courses, *args, **kwargs):
+    """
+    Return the enrollment data for the given courses.
+
+    Args:
+        courses: Course ids list.
+    Returns:
+        Dict with the enrollment data for every course.
+    """
+    data = {}
+
+    for course in courses:
+        try:
+            data[course] = EnrollmentReport(course).generate_report(**kwargs)
         except InvalidKeyError:
             continue
 
