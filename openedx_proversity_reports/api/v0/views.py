@@ -211,7 +211,7 @@ class SalesforceContactId(APIView):
 
         **Response Values**:
 
-            * success: Either, true if the operation was successful or False if not.
+            * success: Either, True if the operation was successful or False if not.
             * details: Operation message.
         """
         records_to_create = request.data.get('records', [])
