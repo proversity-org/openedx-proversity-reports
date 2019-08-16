@@ -10,8 +10,10 @@ from openedx_proversity_reports.serializers import EnrollmentReportSerializer
 from openedx_proversity_reports.edxapp_wrapper.get_course_details import get_course_details
 from openedx_proversity_reports.edxapp_wrapper.get_student_account_library import \
     get_user_salesforce_contact_id
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import \
-    get_course_enrollment, get_user_profile
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import (
+    get_course_enrollment,
+    get_user_profile,
+)
 
 LOG = logging.getLogger(__name__)
 
