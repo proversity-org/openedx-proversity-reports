@@ -102,3 +102,8 @@ def plugin_settings(settings):
         settings.MIDDLEWARE_CLASSES += [
             'openedx_proversity_reports.middleware.UserSessionMiddleware',
         ]
+
+    settings.OPR_COURSE_DETAILS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_DETAILS',
+        settings.OPR_COURSE_DETAILS
+    )
