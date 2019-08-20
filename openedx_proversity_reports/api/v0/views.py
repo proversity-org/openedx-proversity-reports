@@ -6,14 +6,20 @@ import logging
 from celery.result import AsyncResult
 from django.conf import settings
 from django.http import JsonResponse, Http404
+from django.contrib.auth.models import User
 from rest_framework import permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework_oauth.authentication import OAuth2Authentication
 
-from openedx_proversity_reports.edxapp_wrapper.get_edx_rest_framework_extensions import get_jwt_authentication
+from openedx_proversity_reports.edxapp_wrapper.get_edx_rest_framework_extensions import \
+    get_jwt_authentication
 from openedx_proversity_reports.edxapp_wrapper.get_openedx_permissions import get_staff_or_owner
+from openedx_proversity_reports.edxapp_wrapper.get_student_account_library import \
+    get_user_salesforce_contact_id
+from openedx_proversity_reports.serializers import SalesforceContactIdSerializer
 from openedx_proversity_reports.utils import get_attribute_from_module
 
 logger = logging.getLogger(__name__)
@@ -166,3 +172,83 @@ class GetReportView(APIView):
                 data={"status": "Failed", "result": None},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+
+class SalesforceContactId(APIView):
+    """
+    API class to interact with the UserSalesforceContactId model.
+    """
+    DEFAULT_CONTACT_ID_SOURCE = 'Salesforce'
+    authentication_classes = (
+        OAuth2Authentication,
+        get_jwt_authentication(),
+    )
+    permission_classes = (permissions.IsAuthenticated, get_staff_or_owner())
+
+    def post(self, request):
+        """
+        This method creates a new record in the UserSalesforceContactId model
+        for the given Salesforce contact id and user id.
+
+        It's possible to create multiple records in the same request.
+
+        **Params**
+
+            records: List containing dict/s with the user id and contact id values. **Required**
+
+            **Example**
+                records = [
+                    {
+                        user_id: '',
+                        contact_id: ''
+                    },
+                    ...
+                ]
+
+        **Example Requests**:
+
+            POST /proversity-reports/api/v0/salesforce-contact-id
+
+        **Response Values**:
+
+            * success: Either, True if the operation was successful or False if not.
+            * details: Operation message.
+        """
+        records_to_create = request.data.get('records', [])
+
+        if not records_to_create:
+            raise ValidationError(detail={'records': 'The records field cannot be empty.'})
+
+        serialized_data = SalesforceContactIdSerializer(data=records_to_create, many=True)
+
+        serialized_data.is_valid(raise_exception=True)
+
+        salesforce_model = get_user_salesforce_contact_id()
+        operation_errors = []
+
+        for record in serialized_data.data:
+            try:
+                user = User.objects.get(id=record.get('user_id'))
+            except User.DoesNotExist:
+                message = 'User with id: {} does not exists, skipped.'.format(record.get('user_id'))
+                operation_errors.append(message)
+                continue
+
+            salesforce_model.objects.get_or_create(
+                user=user,
+                contact_id=record.get('contact_id', ''),
+                contact_id_source=self.DEFAULT_CONTACT_ID_SOURCE,
+            )
+
+        if operation_errors:
+            json_response = dict(
+                success=False,
+                details=operation_errors,
+            )
+        else:
+            json_response = dict(
+                success=True,
+                details='All records were created successfully.',
+            )
+
+        return JsonResponse(json_response, status=status.HTTP_200_OK)

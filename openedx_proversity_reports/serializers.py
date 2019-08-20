@@ -22,3 +22,12 @@ class EnrollmentReportSerializer(serializers.Serializer):
     updated_at = serializers.DateField(required=False)
     oldest = serializers.DateField(required=False)
     latest = serializers.DateField(required=False)
+
+
+class SalesforceContactIdSerializer(serializers.Serializer):
+    """
+    Serializer for the Salesforce contact id model.
+    """
+    user_id = serializers.IntegerField()
+    contact_id = serializers.CharField(max_length=60)
+    contact_id_source = serializers.CharField(required=False, max_length=60)

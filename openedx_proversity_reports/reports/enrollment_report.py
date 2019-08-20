@@ -7,8 +7,13 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
 from openedx_proversity_reports.serializers import EnrollmentReportSerializer
-from openedx_proversity_reports.edxapp_wrapper.get_student_account_library import get_user_salesforce_contact_id
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import get_course_enrollment, get_user_profile
+from openedx_proversity_reports.edxapp_wrapper.get_course_details import get_course_details
+from openedx_proversity_reports.edxapp_wrapper.get_student_account_library import \
+    get_user_salesforce_contact_id
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import (
+    get_course_enrollment,
+    get_user_profile,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -29,6 +34,11 @@ class EnrollmentReport(object):
         """
         Returns a List with the enrollments for the given dates.
         """
+        course_details = get_course_details().fetch(self.course_key)
+        course_start_intake_of_intent = '{} {}'.format(
+            course_details.start_date.strftime('%B'),
+            course_details.start_date.strftime('%Y'),
+        )
         enrollment_serializer = EnrollmentReportSerializer(data=kwargs)
         date_data = enrollment_serializer.validated_data if enrollment_serializer.is_valid() else {}
         updated_at = date_data.get('updated_at', '')
@@ -76,6 +86,7 @@ class EnrollmentReport(object):
                 'mode': course_enrollment.mode,
                 'is_active': course_enrollment.is_active,
                 'contact_id': contact_id[0].contact_id if contact_id else '',
+                'intake_of_intent': course_start_intake_of_intent,
             }
 
             report_data.append(user_data)

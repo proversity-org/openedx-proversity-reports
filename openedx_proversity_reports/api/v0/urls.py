@@ -20,4 +20,9 @@ urlpatterns = [
         views.GetReportView.as_view(),
         name='get-report-data'
     ),
+    url(
+        r'^salesforce-contact-id$',
+        views.SalesforceContactId.as_view(),
+        name='salesforce-contact-id',
+    ),
 ]
