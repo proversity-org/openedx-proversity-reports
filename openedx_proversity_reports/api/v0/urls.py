@@ -5,35 +5,19 @@ from django.conf.urls import url
 
 from . import views
 
+REPORT_NAME_PATTERN = r'(?P<report_name>(generate)+[a-z-]+)'
+
 urlpatterns = [
     url(
-        r'^generate-completion-report$',
-        views.GenerateCompletionReportView.as_view(),
-        name='generate-completion-report'
+        r'^{report_name_pattern}$'.format(
+            report_name_pattern=REPORT_NAME_PATTERN,
+        ),
+        views.GenerateReportView.as_view(),
+        name='generate-report-view'
     ),
     url(
-        r'^completion-report-data$',
-        views.CompletionReportView.as_view(),
-        name='completion-report-data'
-    ),
-    url(
-        r'^generate-last-page-accessed-report$',
-        views.GenerateLastPageReportView.as_view(),
-        name='generate-last-page-accessed-report'
-    ),
-    url(
-        r'^last-page-accessed-report-data$',
-        views.LastPageReportView.as_view(),
-        name='last-page-accessed-report-data'
-    ),
-    url(
-        r'^generate-time-spent-report$',
-        views.GenerateTimeSpentReportView.as_view(),
-        name='generate-time-spent-report'
-    ),
-    url(
-        r'^time-spent-report-data$',
-        views.TimeSpentReportView.as_view(),
-        name='time-spent-report-data'
+        r'^get-report-data$',
+        views.GetReportView.as_view(),
+        name='get-report-data'
     ),
 ]

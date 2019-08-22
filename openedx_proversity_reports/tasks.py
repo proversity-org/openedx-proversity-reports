@@ -14,12 +14,17 @@ from openedx_proversity_reports.reports.time_spent_report import get_time_spent_
 from openedx_proversity_reports.utils import generate_report_as_list, get_root_block
 
 
+BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
+
+
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
-def generate_completion_report(courses, block_report_filter):
+def generate_completion_report(courses, *args, **kwargs):
     """
     Return the completion data for the given courses
     """
+    block_report_filter = kwargs.get('block_report_filter', BLOCK_DEFAULT_REPORT_FILTER)
     data = {}
+
     for course_id in courses:
         try:
             course_key = CourseKey.from_string(course_id)
@@ -46,7 +51,7 @@ def generate_completion_report(courses, block_report_filter):
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
-def generate_last_page_accessed_report(courses):
+def generate_last_page_accessed_report(courses, *args, **kwargs):
     """
     Return the last page accessed data for the given courses.
 
@@ -68,7 +73,7 @@ def generate_last_page_accessed_report(courses):
 
 
 @task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
-def generate_time_spent_report(courses):
+def generate_time_spent_report(courses, *args, **kwargs):
     """
     Return the time spent data for the given courses.
 
