@@ -25,6 +25,7 @@ def generate_completion_report(courses, *args, **kwargs):
     """
     block_report_filter = kwargs.get('block_report_filter', BLOCK_DEFAULT_REPORT_FILTER)
     data = {}
+
     for course_id in courses:
         try:
             course_key = CourseKey.from_string(course_id)
