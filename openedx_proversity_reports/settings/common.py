@@ -48,7 +48,7 @@ def plugin_settings(settings):
     settings.OPR_COURSE_GRADE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.course_grade_i_v1'
     settings.OPR_COURSE_TEAMS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_teams_i_v1'
     settings.OPR_COURSEWARE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.courseware_i_v1'
-    settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.edx_rest_framework_extensions_g_v1'
+    settings.OPR_EDX_REST_FRAMEWORK_EXTENSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.edx_rest_framework_extensions_i_v1'
     settings.OPR_MODULESTORE = 'openedx_proversity_reports.edxapp_wrapper.backends.modulestore_i_v1'
     settings.OPR_OPENEDX_PERMISSIONS = 'openedx_proversity_reports.edxapp_wrapper.backends.openedx_permissions_i_v1'
     settings.OPR_STUDENT_ACCOUNT_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.student_account_g_v1'
