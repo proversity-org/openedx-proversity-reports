@@ -57,3 +57,8 @@ def plugin_settings(settings):
         'OPR_GOOGLE_ANALYTICS_CREDENTIALS',
         settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS
     )
+
+    settings.OPR_SUPPORTED_TASKS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_SUPPORTED_TASKS',
+        settings.OPR_SUPPORTED_TASKS
+    )
