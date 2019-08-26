@@ -1,7 +1,7 @@
 """ Backend abstraction """
 from student.auth import user_has_role
 from student.roles import CourseStaffRole
-from student.models import CourseAccessRole, CourseEnrollment, UserProfile
+from student.models import CourseAccessRole, CourseEnrollment, UserProfile, get_user
 
 
 def user_has_role_backend(*args, **kwargs):
@@ -27,3 +27,8 @@ def user_profile():
 def course_enrollment():
     """ Returns CourseEnrollment model. """
     return CourseEnrollment
+
+
+def get_user_helper(*args, **kwargs):
+    """ Returns the get_user method. """
+    return get_user(*args, **kwargs)

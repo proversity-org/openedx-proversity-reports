@@ -23,7 +23,6 @@ from openedx_proversity_reports.serializers import SalesforceContactIdSerializer
 from openedx_proversity_reports.utils import get_attribute_from_module
 
 logger = logging.getLogger(__name__)
-SUPPORTED_TASKS_MODULE = 'openedx_proversity_reports.tasks'
 
 SUPPORTED_TASKS_MODULE = 'openedx_proversity_reports.tasks'
 
@@ -64,7 +63,7 @@ class GenerateReportView(APIView):
             POST /proversity-reports/proversity-reports/api/v0/generate-<supported-report-name>
         **Response Values**:
             * success: If the task has been started correctly.
-            * status_url: This url provides the satus and result for the task.
+            * status_url: This url provides the status and result for the task.
             * message: Response message.
         """
         report_name = report_name.replace('-', '_')

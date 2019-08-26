@@ -56,12 +56,14 @@ def plugin_settings(settings):
     settings.OPR_SUPPORTED_FIELDS = 'openedx_proversity_reports.edxapp_wrapper.backends.supported_fields_i_v1'
     settings.OPR_GOOGLE_ANALYTICS_CREDENTIALS = {}
     settings.OPR_GOOGLE_ANALYTICS_VIEW_ID = ''
+    settings.OPR_COURSEWARE_LIBRARY = 'openedx_proversity_reports.edxapp_wrapper.backends.courseware_i_v1'
     settings.OPR_SUPPORTED_TASKS = [
         'generate_completion_report',
         'generate_last_page-accessed_report',
         'generate_time_spent_report',
         'generate_learning_tracker_report',
         'generate_enrollment_report',
+        'generate_activity_completion_report',
     ]
     settings.OPR_TIME_BETWEEN_SESSIONS = 5  # This value is in minutes.
     settings.OPR_COURSE_DETAILS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_details_g_v1'
