@@ -1,5 +1,5 @@
 """
-This file contains the views for openedx-proversity-reports
+This file contains the views for openedx-proversity-reports.
 """
 import logging
 
@@ -23,6 +23,7 @@ from openedx_proversity_reports.serializers import SalesforceContactIdSerializer
 from openedx_proversity_reports.utils import get_attribute_from_module
 
 logger = logging.getLogger(__name__)
+
 SUPPORTED_TASKS_MODULE = 'openedx_proversity_reports.tasks'
 
 
@@ -42,9 +43,7 @@ class GenerateReportView(APIView):
         This method starts a general task in order to build reports using the platform data.
 
         **Params**
-
             block_report_filter: List of block types to retrieve. **Optional**
-
             ** Example **
                     block_types_filter = [
                         'course',
@@ -59,22 +58,13 @@ class GenerateReportView(APIView):
                         'poll',
                         'word_cloud'
                     ]
-
             course_ids: List of course ids. This parameter must contain at least one value.
-
-
         **Example Requests**:
-
-            POST /proversity-reports/completion-report/
-
+            POST /proversity-reports/proversity-reports/api/v0/generate-<supported-report-name>
         **Response Values**:
-
             * success: If the task has been started correctly.
-
-            * status_url: this url provides the satus and result for the task.
-
+            * status_url: This url provides the status and result for the task.
             * message: Response message.
-
         """
         report_name = report_name.replace('-', '_')
         task = get_attribute_from_module(SUPPORTED_TASKS_MODULE, report_name)
@@ -91,8 +81,8 @@ class GenerateReportView(APIView):
         )
 
         if not courses:
-            message = "The parameter course_ids has not been provided."
-            json_response["message"] = message
+            message = 'The parameter course_ids has not been provided.'
+            json_response['message'] = message
             logger.info(message)
             return JsonResponse(
                 json_response,
@@ -102,11 +92,11 @@ class GenerateReportView(APIView):
         task = task.delay(courses, **request.data)
         state_url = request.build_absolute_uri(reverse('proversity-reports:api:v0:get-report-data'))
 
-        logger.info("The task with id = %s has been initialize.", task.id)
+        logger.info('The task with id = %s has been initialize.', task.id)
 
-        json_response["success"] = True
-        json_response["state_url"] = "{}?task_id={}".format(state_url, task.id)
-        json_response["message"] = "The task with id = {} has been initialize.".format(task.id)
+        json_response['success'] = True
+        json_response['state_url'] = '{}?task_id={}'.format(state_url, task.id)
+        json_response['message'] = 'The task with id = {} has been initialize.'.format(task.id)
 
         return JsonResponse(json_response, status=status.HTTP_202_ACCEPTED)
 
@@ -127,24 +117,16 @@ class GetReportView(APIView):
         This method retrieves the requested celery task data by task id.
 
         **Params**
-
             task_id: the identifier for the task
-
-
         **Example Requests**:
-
-            GET /proversity-reports/api/v0/time-spent-report-data?task_id=4309f98a-b7e9-48e6-b9a7-996e640ece2e/
-
+            GET /proversity-reports/api/v0/get-report-data?task_id=<celery-uuid>/
         **Response Values**:
-
             status: task status.
             result: the task result.
-
         **Example Response**:
-
         """
 
-        task_id = request.GET.get("task_id")
+        task_id = request.GET.get('task_id')
 
         if not task_id:
             return Response(status=status.HTTP_400_BAD_REQUEST)

@@ -12,8 +12,13 @@ from openedx_proversity_reports.reports.last_page_accessed import (
 )
 from openedx_proversity_reports.reports.enrollment_report import EnrollmentReport
 from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
+from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
-from openedx_proversity_reports.utils import generate_report_as_list, get_root_block
+from openedx_proversity_reports.utils import (
+    generate_report_as_list,
+    get_root_block,
+    get_enrolled_users,
+)
 
 BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
 
@@ -25,6 +30,7 @@ def generate_completion_report(courses, *args, **kwargs):
     """
     block_report_filter = kwargs.get('block_report_filter', BLOCK_DEFAULT_REPORT_FILTER)
     data = {}
+
     for course_id in courses:
         try:
             course_key = CourseKey.from_string(course_id)
@@ -127,5 +133,30 @@ def generate_enrollment_report(courses, *args, **kwargs):
             data[course] = EnrollmentReport(course).generate_report(**kwargs)
         except InvalidKeyError:
             continue
+
+    return data
+
+
+@task(default_retry_delay=5, max_retries=5)
+def generate_activity_completion_report(courses, *args, **kwargs):
+    """
+    Returns the activity completion report.
+    """
+    data = {}
+    required_block_ids = kwargs.get('required_activity_ids', [])
+
+    for course_id in courses:
+        try:
+            course_key = CourseKey.from_string(course_id)
+        except InvalidKeyError:
+            continue
+
+        course_key = CourseKey.from_string(course_id)
+        completion_report = GenerateCompletionReport(
+            get_enrolled_users(course_key),
+            course_key,
+            required_block_ids,
+        )
+        data[course_id] = completion_report.generate_report_data()
 
     return data

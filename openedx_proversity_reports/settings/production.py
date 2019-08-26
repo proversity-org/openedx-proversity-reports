@@ -107,3 +107,8 @@ def plugin_settings(settings):
         'OPR_COURSE_DETAILS',
         settings.OPR_COURSE_DETAILS
     )
+
+    settings.OPR_COURSEWARE_LIBRARY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSEWARE_LIBRARY',
+        settings.OPR_COURSEWARE_LIBRARY
+    )
