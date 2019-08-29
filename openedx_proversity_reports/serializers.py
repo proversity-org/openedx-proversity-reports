@@ -31,3 +31,27 @@ class SalesforceContactIdSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     contact_id = serializers.CharField(max_length=60)
     contact_id_source = serializers.CharField(required=False, max_length=60)
+
+
+class ActivityCompletionReportSerializer(serializers.Serializer):
+    """
+    Serializer for the activity completion report.
+    """
+    required_activity_ids = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True,
+        required=False,
+    )
+    block_types = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True,
+        required=False,
+    )
+    passing_score = serializers.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        coerce_to_string=False,
+        max_value=1,
+        min_value=0,
+        required=False,
+    )

@@ -1,6 +1,7 @@
 """
 This file contains the views for openedx-proversity-reports.
 """
+import json
 import logging
 
 from celery.result import AsyncResult
@@ -132,28 +133,35 @@ class GetReportView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         task = AsyncResult(id=task_id)
-        result = None
+        response_data = {
+            'data': {
+                'status': task.status,
+                'result': None,
+            },
+            'status': status.HTTP_200_OK,
+        }
 
         if task.successful():
-            result = task.result
+            response_data['data']['result'] = task.result
         elif task.failed():
             logger.info(
                 "The task with id = %s has been finalized with the following error %s.",
                 task.id,
                 task.info.message
             )
-            result = None
+
+            try:
+                response_data = json.loads(task.result.message)
+            except ValueError:
+                response_data['status'] = status.HTTP_500_INTERNAL_SERVER_ERROR
 
         try:
-            return JsonResponse(
-                data={"status": task.status, "result": result},
-                status=status.HTTP_200_OK,
-            )
+            return JsonResponse(**response_data)
         except TypeError:
-            return JsonResponse(
-                data={"status": "Failed", "result": None},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+            response_data['status'] = status.HTTP_503_SERVICE_UNAVAILABLE
+            response_data['data']['result'] = None
+
+        return JsonResponse(**response_data)
 
 
 class SalesforceContactId(APIView):
