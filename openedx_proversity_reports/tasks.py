@@ -1,10 +1,15 @@
 """
 Task for Openedx Proversity Report plugin.
 """
+import json
+
 from celery import task
+from celery.exceptions import InvalidTaskError
+from celery.states import FAILURE
 from django.contrib.auth.models import User
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
+from rest_framework import status
 
 from openedx_proversity_reports.reports.last_page_accessed import (
     get_last_page_accessed_data,
@@ -14,6 +19,7 @@ from openedx_proversity_reports.reports.enrollment_report import EnrollmentRepor
 from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
+from openedx_proversity_reports.serializers import ActivityCompletionReportSerializer
 from openedx_proversity_reports.utils import (
     generate_report_as_list,
     get_root_block,
@@ -143,7 +149,24 @@ def generate_activity_completion_report(courses, *args, **kwargs):
     Returns the activity completion report.
     """
     data = {}
-    required_block_ids = kwargs.get('required_activity_ids', [])
+    serialized_data = ActivityCompletionReportSerializer(data=kwargs)
+
+    if not serialized_data.is_valid():
+        # Raises the error containing the JsonResponse parameters
+        # to be used in the view.
+        raise InvalidTaskError(
+            json.dumps({
+                'data': {
+                    'status': FAILURE,
+                    'result': serialized_data.errors,
+                },
+                'status': status.HTTP_400_BAD_REQUEST,
+            })
+        )
+
+    required_block_ids = serialized_data.data.get('required_activity_ids', [])
+    block_types = serialized_data.data.get('block_types', [])
+    passing_score = serialized_data.data.get('passing_score', [])
 
     for course_id in courses:
         try:
@@ -156,6 +179,8 @@ def generate_activity_completion_report(courses, *args, **kwargs):
             get_enrolled_users(course_key),
             course_key,
             required_block_ids,
+            block_types,
+            passing_score,
         )
         data[course_id] = completion_report.generate_report_data()
 
