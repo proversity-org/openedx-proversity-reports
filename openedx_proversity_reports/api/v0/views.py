@@ -20,8 +20,13 @@ from openedx_proversity_reports.edxapp_wrapper.get_edx_rest_framework_extensions
 from openedx_proversity_reports.edxapp_wrapper.get_openedx_permissions import get_staff_or_owner
 from openedx_proversity_reports.edxapp_wrapper.get_student_account_library import \
     get_user_salesforce_contact_id
-from openedx_proversity_reports.serializers import SalesforceContactIdSerializer
-from openedx_proversity_reports.utils import get_attribute_from_module
+from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
+from openedx_proversity_reports.serializers import SalesforceContactIdSerializer, ActivityCompletionReportSerializer
+from openedx_proversity_reports.utils import (
+    get_attribute_from_module,
+    get_exisiting_users_by_email,
+    get_user_course_enrollments,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -240,5 +245,102 @@ class SalesforceContactId(APIView):
                 success=True,
                 details='All records were created successfully.',
             )
+
+        return JsonResponse(json_response, status=status.HTTP_200_OK)
+
+
+class UserActivityCompletionView(APIView):
+    """
+    This class is intended to return the activity completion data per user.
+    """
+
+    authentication_classes = (
+        OAuth2Authentication,
+        get_jwt_authentication(),
+    )
+    permission_classes = (permissions.IsAuthenticated, get_staff_or_owner())
+
+    def post(self, request):
+        """
+        Return a JSON representation of the activity completion data by user.
+
+        **Params**
+            users: List of the email of the users. This parameter may be empty but it must contain at least one value to get data.
+            course_ids: List of course ids to filter only by those courses. This parameter may be empty.
+            block_types: List of the block types to get the completion data.
+                This parameter may be empty but it must contain at least one value to get data
+            passing_score: Integer between 0 and 1, which is the percentage of videos that must be viewed.
+
+            **Example**
+            {
+                "course_ids": [
+                    "course-v1:edX+DemoX+Demo_Course"
+                ],
+                "block_types": ["video"],
+                "passing_score": 0.75,
+                "users": [
+                    "honor@example.com",
+                    "audit@example.com"
+                ]
+            }
+        **Example Requests**:
+            POST /proversity-reports/proversity-reports/api/v0/user-activity-completion-data
+        **Response Values**:
+            * result: Activity completion data per user.
+
+            **Example**
+            {
+                "result": {
+                    "users": {
+                        "audit@example.com": {
+                            "course-v1:edX+DemoX+Demo_Course": {
+                                "Activity name 5": "not_completed",
+                                "Activity name 4": "not_completed",
+                                "course_is_complete": true,
+                                "Activity name 2": "completed",
+                                "total_activities": 5,
+                                "Activity name": "completed",
+                                "Activity name 3": "completed",
+                                "completed_activities": 3
+                            }
+                        },
+                    }
+                }
+            }
+        """
+        completion_data = {}
+        serialized_data = ActivityCompletionReportSerializer(data=request.data)
+
+        serialized_data.is_valid(raise_exception=True)
+
+        user_list = get_exisiting_users_by_email(serialized_data.data.get('users', []))
+
+        for user in user_list:
+            user_course_keys = serialized_data.data.get('course_keys', []) or get_user_course_enrollments(user)
+            course_user_completion_data = {}
+
+            for course_key in user_course_keys:
+                activity_completion_data = GenerateCompletionReport.activity_completion_data_per_user(
+                    user=user,
+                    course_key=course_key,
+                    block_types=serialized_data.data.get('block_types', []),
+                    passing_score=serialized_data.data.get('passing_score', 0),
+                ).get_user_completion_data()
+
+                course_data = {
+                    str(course_key): activity_completion_data,
+                }
+
+                course_user_completion_data.update(course_data)
+
+            completion_data.update({
+                user.email: course_user_completion_data,
+            })
+
+        json_response = {
+            'result': {
+                'users': completion_data,
+            }
+        }
 
         return JsonResponse(json_response, status=status.HTTP_200_OK)

@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.locator import BlockUsageLocator
 
+from openedx_proversity_reports.utils import get_required_activity_dict
 from openedx_proversity_reports.edxapp_wrapper.get_block_structure_library import get_course_in_cache
 from openedx_proversity_reports.edxapp_wrapper.get_completion_models import get_block_completion_model
 from openedx_proversity_reports.edxapp_wrapper.get_courseware_library import get_course_by_id
@@ -29,10 +30,26 @@ class GenerateCompletionReport(object):
     def __init__(self, users, course_key, required_block_ids, block_types, passing_score):
         self.users = users
         self.course_key = course_key
-        self.course = get_course_by_id(self.course_key)
         self.required_block_types = block_types
         self.required_block_ids = self.get_course_required_block_ids(required_block_ids)
         self.passing_score = passing_score
+
+
+    @classmethod
+    def activity_completion_data_per_user(cls, user, course_key, block_types, passing_score):
+        """
+        Returns the GenerateCompletionReport class by passing a default value to the required_block_ids argument.
+        This is intended to use the same logic without change the class it all.
+        Pass the users argument as a single user list, this is to maintain the naming convention and
+        keep the type of the field, since it is supposed to be a list.
+        """
+        return cls(
+            users=[user],
+            course_key=course_key,
+            required_block_ids=[],
+            block_types=block_types,
+            passing_score=passing_score,
+        )
 
 
     @property
@@ -172,6 +189,29 @@ class GenerateCompletionReport(object):
                 continue
 
         return required_course_block_ids
+
+
+    def get_user_completion_data(self):
+        """
+        Returns the completion data per course for the class instance user.
+
+        Returns:
+            user_activity_completion_data: Dict containing the activity completion data.
+        """
+        activity_completion_data = self.generate_report_data()
+
+        if not activity_completion_data:
+            return {}
+
+        user_activity_completion_data = {
+            'total_activities': activity_completion_data[0].get('total_activities', 0),
+            'course_is_complete': activity_completion_data[0].get('course_is_complete', False),
+            'completed_activities': activity_completion_data[0].get('completed_activities', 0),
+        }
+
+        user_activity_completion_data.update(get_required_activity_dict(activity_completion_data[0]))
+
+        return user_activity_completion_data
 
 
 def is_activity_completed(block_id, activities):

@@ -13,7 +13,7 @@ from openedx_proversity_reports.edxapp_wrapper.get_course_blocks import get_cour
 from openedx_proversity_reports.edxapp_wrapper.get_course_cohort import get_course_cohort
 from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_course_teams
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
-from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role
+from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role, get_course_enrollment
 from openedx_proversity_reports.edxapp_wrapper.get_supported_fields import get_supported_fields
 
 
@@ -287,3 +287,77 @@ def get_attribute_from_module(module, attribute_name):
     """
     module = import_module(module)
     return getattr(module, attribute_name, None)
+
+
+def get_exisiting_users_by_email(user_email_list):
+    """
+    Return a list of django.contrib.auth.models.User instances of users
+    that exists in the platform.
+
+    Args:
+        user_email_list: List containing the emails of the users.
+    Returns:
+        exisiting_user_list: List containing django.contrib.auth.models.User instances.
+    """
+    exisiting_user_list = []
+
+    for user_email in user_email_list:
+        try:
+            exisiting_user_list.append(User.objects.get(email=user_email))
+        except User.DoesNotExist:
+            continue
+
+    return exisiting_user_list
+
+
+def get_user_course_enrollments(user):
+    """
+    Return a list of course keys of the courses where the user is enrolled.
+
+    Args:
+        user: django.contrib.auth.models.User instance.
+    Returns:
+        List containing opaque_keys.edx.keys.CourseKey course instances.
+    """
+    course_enrollment_objects = get_course_enrollment().objects
+    user_course_enrollments = course_enrollment_objects.filter(
+        user__id=user.id,
+        user__courseaccessrole__id=None,
+    )
+
+    return [course_enrollment.course_id for course_enrollment in user_course_enrollments]
+
+
+def get_required_activity_dict(user_data):
+    """
+    Create a dict with the required activity data.
+
+    Args:
+        user_data: Activity completion report data per course.
+    Returns:
+        Dict containing activities info.
+        {
+            'Multiple Choice': 'completed',
+            'Image Explorer': 'completed',
+            'Video': 'not_completed'
+        }
+    """
+    required_activities_data = {}
+    total_activities = user_data.get('total_activities', 0)
+
+    if total_activities:
+        total = int(total_activities)
+        # Create as many 'required_activity_' as the total number of activities.
+        for activity_number in range(1, total + 1): # Plus 1, because the stop argument it's not inclusive.
+            required_activity_status = user_data.get('required_activity_{}'.format(activity_number), 'not_completed')
+            required_activity_name = user_data.get('required_activity_{}_name'.format(activity_number), '')
+
+            # Let's add the activity number at the end of the name if two or more activities have the same name.
+            if required_activity_name in required_activities_data.keys():
+                required_activity_name = '{}-{}'.format(required_activity_name, activity_number)
+
+            required_activities_data.update({
+                required_activity_name: required_activity_status,
+            })
+
+    return required_activities_data
