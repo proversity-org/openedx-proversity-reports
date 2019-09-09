@@ -1,7 +1,10 @@
 """
 Serializers for openedx-proversity-reports.
 """
+from opaque_keys import InvalidKeyError
+from opaque_keys.edx.keys import CourseKey
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
 
 class UserSessionSerializer(serializers.Serializer):
@@ -35,7 +38,7 @@ class SalesforceContactIdSerializer(serializers.Serializer):
 
 class ActivityCompletionReportSerializer(serializers.Serializer):
     """
-    Serializer for the activity completion report.
+    Serializer for the activity completion report and the activity completion per user API.
     """
     required_activity_ids = serializers.ListField(
         child=serializers.CharField(),
@@ -55,3 +58,34 @@ class ActivityCompletionReportSerializer(serializers.Serializer):
         min_value=0,
         required=False,
     )
+    users = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True,
+        required=False,
+    )
+    course_ids = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True,
+        required=False,
+    )
+    course_keys = serializers.SerializerMethodField()
+
+
+    def get_course_keys(self, obj):
+        """
+        Return a list of opaque_keys.edx.keys.CourseKey instances according to the course_ids field.
+
+        Args:
+            obj: Serializer fields object.
+        Returns:
+            course_keys: List containing opaque_keys.edx.keys.CourseKey course instances.
+        """
+        course_keys = []
+
+        for course_id in obj.get('course_ids', []):
+            try:
+                course_keys.append(CourseKey.from_string(course_id))
+            except InvalidKeyError:
+                continue
+
+        return course_keys

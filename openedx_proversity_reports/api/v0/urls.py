@@ -25,4 +25,9 @@ urlpatterns = [
         views.SalesforceContactId.as_view(),
         name='salesforce-contact-id',
     ),
+    url(
+        r'^user-activity-completion-data$',
+        views.UserActivityCompletionView.as_view(),
+        name='user-activity-completion-data',
+    ),
 ]
