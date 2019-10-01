@@ -26,6 +26,7 @@ class GenerateCompletionReport(object):
     """
     Class to generate the activity completion report.
     """
+    course_block_structure = None
 
     def __init__(self, users, course_key, required_block_ids, block_types, passing_score):
         self.users = users
@@ -57,11 +58,15 @@ class GenerateCompletionReport(object):
         """
         Returns blocks matching by self.block_type_filter.
         """
-        block_structure = get_course_in_cache(self.course_key)
-        matching_blocks = block_structure.topological_traversal(
-            filter_func=self.block_type_filter,
-            yield_descendants_of_unyielded=True,
-        )
+        try:
+            block_structure = get_course_in_cache(self.course_key)
+            matching_blocks = block_structure.topological_traversal(
+                filter_func=self.block_type_filter,
+                yield_descendants_of_unyielded=True,
+            )
+            self.course_block_structure = block_structure
+        except item_not_found_error():
+            return []
 
         return list(matching_blocks)
 
@@ -89,10 +94,13 @@ class GenerateCompletionReport(object):
             completed_activities = self.get_completed_activities(user)
             last_login = user.last_login
             display_last_login = None
-            user_enrollment = user.courseenrollment_set.get(
-                course_id=self.course_key,
-            )
 
+            try:
+                user_enrollment = user.courseenrollment_set.get(
+                    course_id=self.course_key,
+                )
+            except ObjectDoesNotExist:
+                continue
 
             # Last login could not be defined for a user.
             if last_login:
@@ -118,23 +126,15 @@ class GenerateCompletionReport(object):
             }
 
             for index, item in enumerate(required_ids, 1):
-                try:
-                    state = is_activity_completed(item.block_id, completed_activities)
-                    block = get_modulestore().get_item(item)
-                    total_activities += 1
-                except item_not_found_error() as item_error:
-                    logger.warn(
-                        'The block id %s is not valid, error: %s',
-                        item,
-                        item_error,
-                    )
-                    continue
-                except InvalidKeyError:
-                    continue
+                state = is_activity_completed(item.block_id, completed_activities)
+                total_activities += 1
 
                 data.update({
                     'required_activity_{}'.format(index): state,
-                    'required_activity_{}_name'.format(index): block.display_name,
+                    'required_activity_{}_name'.format(index): self.course_block_structure.get_xblock_field(
+                        item,
+                        'display_name',
+                    ),
                 })
 
             data.update({
