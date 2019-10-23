@@ -26,5 +26,6 @@ requirements-ironwood: ## install environment requirements
 run-quality-test: clean ## Run quality test.
 	pylint ./openedx_proversity_reports --rcfile=./setup.cfg
 
+# TODO Fix this command.
 upgrade: clean ## Update requirements.txt file.
 	pip-compile --output-file requirements.txt requirements.in

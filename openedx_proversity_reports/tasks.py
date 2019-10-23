@@ -2,6 +2,7 @@
 Task for Openedx Proversity Report plugin.
 """
 import json
+from datetime import datetime
 
 from celery import task
 from celery.exceptions import InvalidTaskError
@@ -19,6 +20,7 @@ from openedx_proversity_reports.reports.enrollment_report import EnrollmentRepor
 from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
+from openedx_proversity_reports.reports.time_spent_report_per_user import GenerateTimeSpentPerUserReport
 from openedx_proversity_reports.serializers import ActivityCompletionReportSerializer
 from openedx_proversity_reports.utils import (
     generate_report_as_list,
@@ -185,3 +187,46 @@ def generate_activity_completion_report(courses, *args, **kwargs):
         data[course_id] = completion_report.generate_report_data()
 
     return data
+
+
+@task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
+def generate_time_spent_per_user_report(courses, *args, **kwargs):
+    """
+    Returns the time spent per user data for the given courses.
+
+    Args:
+        courses: Course ids list.
+        date: Date string for querying in Google BigQuery. Date format: '%Y-%m-%d' e.g. '2019-01-01'
+    Returns:
+        Dict with 'time_spent_per_user_data' containing time spent per user report data.
+    """
+    date_format = '%Y-%m-%d'
+    report_data = {}
+
+    try:
+        date_field = datetime.strptime(kwargs.get('date', ''), date_format)
+    except ValueError:
+        raise InvalidTaskError(
+            json.dumps({
+                'data': {
+                    'status': FAILURE,
+                    'result': 'date field was not provided or has an invalid format.',
+                },
+                'status': status.HTTP_400_BAD_REQUEST,
+            }),
+        )
+
+    for course_id in courses:
+        try:
+            course_key = CourseKey.from_string(course_id)
+        except InvalidKeyError:
+            continue
+
+        time_spent_per_user_report = GenerateTimeSpentPerUserReport(
+            users=get_enrolled_users(course_key),
+            course_key=course_key,
+            query_date=date_field.strftime(date_format),
+        )
+        report_data[course_id] = time_spent_per_user_report.generate_report_data()
+
+    return report_data

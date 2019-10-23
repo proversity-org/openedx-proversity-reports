@@ -112,3 +112,33 @@ def plugin_settings(settings):
         'OPR_COURSEWARE_LIBRARY',
         settings.OPR_COURSEWARE_LIBRARY
     )
+
+    settings.OPR_GOOGLE_SERVICE_ACCOUNT_CREDENTIALS = getattr(settings, 'AUTH_TOKENS', {}).get(
+        'OPR_GOOGLE_SERVICE_ACCOUNT_CREDENTIALS',
+        settings.OPR_GOOGLE_SERVICE_ACCOUNT_CREDENTIALS,
+    )
+
+    settings.OPR_GOOGLE_CLOUD_PROJECT_ID = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_GOOGLE_CLOUD_PROJECT_ID',
+        settings.OPR_GOOGLE_CLOUD_PROJECT_ID,
+    )
+
+    settings.OPR_GOOGLE_BIGQUERY_MAX_PROCESS_BYTES = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_GOOGLE_BIGQUERY_MAX_PROCESS_BYTES',
+        settings.OPR_GOOGLE_BIGQUERY_MAX_PROCESS_BYTES,
+    )
+
+    settings.OPR_GOOGLE_BIGQUERY_MAX_NUMBER_RESULTS_PER_QUERY = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_GOOGLE_BIGQUERY_MAX_NUMBER_RESULTS_PER_QUERY',
+        settings.OPR_GOOGLE_BIGQUERY_MAX_NUMBER_RESULTS_PER_QUERY,
+    )
+
+    settings.OPR_GOOGLE_BIGQUERY_USE_CACHE = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_GOOGLE_BIGQUERY_USE_CACHE',
+        settings.OPR_GOOGLE_BIGQUERY_USE_CACHE,
+    )
+
+    settings.OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME',
+        settings.OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME,
+    )
