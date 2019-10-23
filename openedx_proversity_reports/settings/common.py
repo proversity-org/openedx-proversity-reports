@@ -64,6 +64,13 @@ def plugin_settings(settings):
         'generate_learning_tracker_report',
         'generate_enrollment_report',
         'generate_activity_completion_report',
+        'generate_time_spent_per_user_report',
     ]
     settings.OPR_TIME_BETWEEN_SESSIONS = 5  # This value is in minutes.
     settings.OPR_COURSE_DETAILS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_details_g_v1'
+    settings.OPR_GOOGLE_SERVICE_ACCOUNT_CREDENTIALS = {}
+    settings.OPR_GOOGLE_CLOUD_PROJECT_ID = ''
+    settings.OPR_GOOGLE_BIGQUERY_MAX_PROCESS_BYTES = 10485760  # 10MB
+    settings.OPR_GOOGLE_BIGQUERY_MAX_NUMBER_RESULTS_PER_QUERY = 1000
+    settings.OPR_GOOGLE_BIGQUERY_USE_CACHE = True
+    settings.OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME = 'time_umid30'
