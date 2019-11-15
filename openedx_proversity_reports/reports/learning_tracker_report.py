@@ -76,6 +76,7 @@ class LearningTrackerReport(object):
                 'cumulative_grade': self._get_cumulative_grade(user),
                 'has_verified_certificate': self._has_verified_certificate(user),
                 'time_between_sessions': self._get_time_bewteen_sessions(user),
+                'total_sessions': self._get_total_sessions(user),
                 'weekly_clicks': self._get_weekly_clicks(user),
                 'number_of_graded_assessment': self._get_number_of_graded_assessment(user),
                 'timeliness_of_submissions': self._get_timeliness_of_submissions(user),
@@ -151,6 +152,22 @@ class LearningTrackerReport(object):
         try:
             meta = json.loads(user_profile.meta)
             return float(meta.get('time_between_sessions', 0))
+        except ValueError:
+            return 0
+
+    def _get_total_sessions(self, user):
+        """
+        Get learner metrics for "Total of sessions".
+        Args:
+            user: User Model.
+        Returns:
+            int (Total of sessions).
+        """
+        user_profile = get_user_profile().objects.get(user_id=user.id)
+
+        try:
+            meta = json.loads(user_profile.meta)
+            return int(meta.get('session_number', 0))
         except ValueError:
             return 0
 
