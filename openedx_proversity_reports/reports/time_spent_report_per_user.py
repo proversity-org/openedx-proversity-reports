@@ -120,6 +120,12 @@ class GenerateTimeSpentPerUserReport(object):
             user_course_cohort = get_course_cohort(user=user, course_key=self.course_key)
             user_course_teams = get_course_teams(membership__user=user, course_id=self.course_key)
             block_data = []
+            chapter_name = ''
+            chapter_position = 0
+            sequential_name = ''
+            sequential_position = 0
+            vertical_name = ''
+            vertical_position = 0
 
             for course_block in course_blocks:
                 bigquery_item = {}
@@ -130,13 +136,39 @@ class GenerateTimeSpentPerUserReport(object):
                         bigquery_item = item_data
                         break
 
-                block_data.append({
-                    'average_time_spent': bigquery_item.get(time_on_asset_column_name, 0) if bigquery_item else 0,
-                    'block_name': self.course_block_structure.get_xblock_field(
+                if course_block.block_type == 'chapter':
+                    chapter_name = self.course_block_structure.get_xblock_field(
                         course_block,
                         'display_name',
-                    ) or '',
-                })
+                    ) or ''
+                    sequential_position = 0
+                    chapter_position += 1
+                elif course_block.block_type == 'sequential':
+                    sequential_name = self.course_block_structure.get_xblock_field(
+                        course_block,
+                        'display_name',
+                    ) or ''
+                    sequential_position += 1
+                elif course_block.block_type == 'vertical':
+                    vertical_name = self.course_block_structure.get_xblock_field(
+                        course_block,
+                        'display_name',
+                    ) or ''
+                    # The vertical position must be only incremental.
+                    vertical_position += 1
+
+                    block_data.append({
+                        'average_time_spent': bigquery_item.get(
+                            time_on_asset_column_name,
+                            0,
+                        ) if bigquery_item else 0,
+                        'chapter_name': chapter_name,
+                        'chapter_position': chapter_position,
+                        'sequential_name': sequential_name,
+                        'sequential_position': sequential_position,
+                        'vertical_name': vertical_name,
+                        'vertical_position': vertical_position,
+                    })
 
             user_data.append({
                 'username': user.username,
@@ -175,19 +207,19 @@ def get_google_bigquery_api_client():
 
 def block_type_filter(block_item):
     """
-    Return True if the block type does not exists in block_type_blacklist otherwise False.
-    This functionallity is to get only the component block types and discard the other block types.
+    Return True if the block type exists in block_type_whitelist otherwise False.
+    This functionallity is to get only the required block types and discard the other block types.
 
     Args:
         block_item: Course block item to be matched.
     """
-    block_type_blacklist = (
-        'course',
+    block_type_whitelist = (
         'chapter',
         'sequential',
         'vertical',
     )
-    return True if block_item.block_type not in block_type_blacklist else False
+
+    return block_item.block_type in block_type_whitelist
 
 
 def get_google_bigquery_job_config():
@@ -227,8 +259,7 @@ def get_google_bigquery_query(course_dataset_name, date, course_id):
     query_string = """
         SELECT course_id, username, module_id, time_umid5, time_umid30
         FROM `{google_project_id}.{bigquery_dataset}.time_on_asset_daily`
-        WHERE module_id NOT LIKE '%vertical%'
-        AND module_id NOT LIKE '%sequential%'
+        WHERE module_id LIKE '%vertical%'
         AND course_id = '{course_id}'
         AND time_umid5 IS NOT NULL
         AND time_umid30 IS NOT NULL
