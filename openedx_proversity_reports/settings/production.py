@@ -142,3 +142,13 @@ def plugin_settings(settings):
         'OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME',
         settings.OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME,
     )
+
+    settings.OPR_SUPPORTED_REPORTS_BACKENDS = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_SUPPORTED_REPORTS_BACKENDS',
+        settings.OPR_SUPPORTED_REPORTS_BACKENDS,
+    )
+
+    settings.OPR_DEFAULT_PAGE_RESULTS_LIMIT = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_DEFAULT_PAGE_RESULTS_LIMIT',
+        settings.OPR_DEFAULT_PAGE_RESULTS_LIMIT,
+    )

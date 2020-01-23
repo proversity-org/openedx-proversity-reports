@@ -4,8 +4,10 @@
 Utils file for Openedx Proversity Reports.
 """
 import copy
+import logging
 from importlib import import_module
 
+from django.conf import settings
 from django.contrib.auth.models import User
 
 from openedx_proversity_reports.edxapp_wrapper.get_completion_models import get_block_completion_model
@@ -15,6 +17,8 @@ from openedx_proversity_reports.edxapp_wrapper.get_course_teams import get_cours
 from openedx_proversity_reports.edxapp_wrapper.get_modulestore import get_modulestore
 from openedx_proversity_reports.edxapp_wrapper.get_student_library import course_access_role, get_course_enrollment
 from openedx_proversity_reports.edxapp_wrapper.get_supported_fields import get_supported_fields
+
+logger = logging.getLogger(__name__)
 
 
 def generate_report_as_list(users, course_key, block_report_filter, root_block):
@@ -258,21 +262,28 @@ def get_user_role(user, course_key):
     return user_role
 
 
-def get_enrolled_users(course_key):
+def get_enrolled_users(course_key, include_staff_users=False):
     """
-    Return all the non staff users for the given course key.
+    Return all the enrolled users for the given course key.
 
     Args:
         course_key: opaque_keys.edx.keys.CourseKey.
+        include_staff_users: True to include course and platform staff users.
     Returns:
         Queryset of Users.
     """
-    return User.objects.filter(
-        courseenrollment__course_id=course_key,
-        courseenrollment__is_active=1,
-        courseaccessrole__id=None,
-        is_staff=0,
-    )
+    if include_staff_users:
+        return User.objects.filter(
+            courseenrollment__course_id=course_key,
+            courseenrollment__is_active=1,
+        )
+    else:
+        return User.objects.filter(
+            courseenrollment__course_id=course_key,
+            courseenrollment__is_active=1,
+            courseaccessrole__id=None,
+            is_staff=0,
+        )
 
 
 def get_attribute_from_module(module, attribute_name):
@@ -361,3 +372,32 @@ def get_required_activity_dict(user_data):
             })
 
     return required_activities_data
+
+
+def get_report_backend(requested_report_name):
+    """
+    Return the correspondent report backend for the requested report.
+
+    Args:
+        requested_report_name: Name of the requested report.
+    """
+    report_name = requested_report_name.replace('-', '_')
+    supported_backend_reports = getattr(settings, 'OPR_SUPPORTED_REPORTS_BACKENDS', {})
+
+    if not (supported_backend_reports or report_name in supported_backend_reports):
+        logging.warn(
+            'Either OPR_SUPPORTED_REPORTS_BACKENDS was not provided or the report backend was not configured.',
+        )
+        return None
+
+    report_backend_settings = supported_backend_reports.get(report_name, {})
+    report_backend_value = report_backend_settings.get('backend', '').split(':')
+
+    try:
+        backend_module = import_module(report_backend_value[0])
+        report_backend = getattr(backend_module, report_backend_value[-1], None)
+    except IndexError:
+        logging.warn('Report backend not found. %s', report_backend_value)
+        report_backend = None
+
+    return report_backend, report_backend_settings

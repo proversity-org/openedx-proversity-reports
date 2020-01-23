@@ -55,3 +55,30 @@ def get_course_enrollment():
     backend = import_module(backend_function)
 
     return backend.course_enrollment()
+
+
+def user_readonly_serializer(*args, **kwargs):
+    """ Get UserReadOnlySerializer. """
+
+    backend_function = settings.OPR_STUDENT_LIBRARY
+    backend = import_module(backend_function)
+
+    return backend.get_user_readonly_serializer(*args, **kwargs)
+
+
+def user_attribute():
+    """ Get the UserAttribute model. """
+
+    backend_function = settings.OPR_STUDENT_LIBRARY
+    backend = import_module(backend_function)
+
+    return backend.get_user_attribute()
+
+
+def user_signup_source():
+    """ Get the UserSignupSource model. """
+
+    backend_function = settings.OPR_STUDENT_LIBRARY
+    backend = import_module(backend_function)
+
+    return backend.get_user_signup_source()
