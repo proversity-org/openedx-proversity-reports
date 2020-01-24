@@ -1,6 +1,7 @@
 """
 Serializers for openedx-proversity-reports.
 """
+from django.conf import settings
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import serializers
@@ -70,6 +71,42 @@ class ActivityCompletionReportSerializer(serializers.Serializer):
     )
     course_keys = serializers.SerializerMethodField()
 
+
+    def get_course_keys(self, obj):
+        """
+        Return a list of opaque_keys.edx.keys.CourseKey instances according to the course_ids field.
+
+        Args:
+            obj: Serializer fields object.
+        Returns:
+            course_keys: List containing opaque_keys.edx.keys.CourseKey course instances.
+        """
+        course_keys = []
+
+        for course_id in obj.get('course_ids', []):
+            try:
+                course_keys.append(CourseKey.from_string(course_id))
+            except InvalidKeyError:
+                continue
+
+        return course_keys
+
+
+class GenerateReportViewSerializer(serializers.Serializer):
+    """
+    Serializer for the POST method of the GenerateReportView API endpoint.
+    """
+    course_ids = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True,
+        required=True,
+    )
+    course_keys = serializers.SerializerMethodField()
+    limit = serializers.IntegerField(
+        required=False,
+        default=getattr(settings, 'OPR_DEFAULT_PAGE_RESULTS_LIMIT', 10),
+        min_value=0,
+    )
 
     def get_course_keys(self, obj):
         """

@@ -74,3 +74,10 @@ def plugin_settings(settings):
     settings.OPR_GOOGLE_BIGQUERY_MAX_NUMBER_RESULTS_PER_QUERY = 1000
     settings.OPR_GOOGLE_BIGQUERY_USE_CACHE = True
     settings.OPR_GOOGLE_BIGQUERY_TIME_ON_ASSET_DAILY_COLUMN_NAME = 'time_umid30'
+    settings.OPR_SUPPORTED_REPORTS_BACKENDS = {
+        'generate_enrollment_per_site_report': {
+            'backend': 'openedx_proversity_reports.reports.backend.enrollment_per_site_report:EnrollmentReportPerSiteBackend',
+            'max_results_per_page': 10
+        }
+    }
+    settings.OPR_DEFAULT_PAGE_RESULTS_LIMIT = 10

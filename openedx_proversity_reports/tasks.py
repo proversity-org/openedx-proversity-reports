@@ -12,20 +12,22 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import status
 
-from openedx_proversity_reports.reports.last_page_accessed import (
-    get_last_page_accessed_data,
-    get_exit_count_data,
-)
-from openedx_proversity_reports.reports.enrollment_report import EnrollmentReport
-from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
+from openedx_proversity_reports.reports.backend.enrollment_per_site_report import generate_enrollment_per_site_report
+from openedx_proversity_reports.reports.enrollment_report import EnrollmentReport
+from openedx_proversity_reports.reports.last_page_accessed import (
+    get_exit_count_data,
+    get_last_page_accessed_data,
+)
+from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
 from openedx_proversity_reports.reports.time_spent_report_per_user import GenerateTimeSpentPerUserReport
 from openedx_proversity_reports.serializers import ActivityCompletionReportSerializer
 from openedx_proversity_reports.utils import (
     generate_report_as_list,
-    get_root_block,
+    get_course_enrollment,
     get_enrolled_users,
+    get_root_block, get_user_role,
 )
 
 BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
@@ -230,3 +232,33 @@ def generate_time_spent_per_user_report(courses, *args, **kwargs):
         report_data[course_id] = time_spent_per_user_report.generate_report_data()
 
     return report_data
+
+@task()
+def enrollment_per_site_report_task(*args, **kwargs):
+    """
+    Generate the enrollemt per site report.
+
+    kwargs:
+        course_key: Course id string.
+        enrolled_users: List of the enrolled users in the course.
+        extra_data: Contains extra data passed from the report backend.
+    Returns:
+        Dict: {
+            site: Requested site name.
+            registered_users: Number of registered users in the site.
+            course_key: Course id string.
+            data: Data returned from the report generation method.
+        }
+    """
+    extra_data = kwargs.pop('extra_data', {})
+    report_data = generate_enrollment_per_site_report(
+        course_key=kwargs.get('course_key', ''),
+        enrolled_users=kwargs.pop('enrolled_users', []),
+    )
+
+    return {
+        'site': extra_data.get('site_name', ''),
+        'registered_users': extra_data.get('registered_users', 0),
+        'course_key': kwargs.get('course_key', ''),
+        'data': report_data,
+    }
