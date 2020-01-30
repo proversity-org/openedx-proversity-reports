@@ -51,11 +51,15 @@ class EnrollmentReportPerSiteBackend(BaseReportBackend):
                 'status': status.HTTP_400_BAD_REQUEST,
             }
 
-        created_on_site_count = user_attribute().objects.filter(name='created_on_site', value=site_name).count()
+        users_created_on_site = user_attribute().objects.values('user').filter(name='created_on_site', value=site_name)
         # Support backwards compatibility with microsites.
-        signup_source_count = user_signup_source().objects.filter(site=site_name).count()
+        users_signup_source = user_signup_source().objects.values('user').filter(site=site_name)
+        filter_users_on_site = set.union(
+            set([created_on_site.get('user', '') for created_on_site in users_created_on_site]),
+            set([signup_source.get('user', '') for signup_source in users_signup_source]),
+        )
 
-        extra_data.update({'registered_users': created_on_site_count + signup_source_count})
+        extra_data.update({'registered_users': len(filter_users_on_site)})
 
         return super(EnrollmentReportPerSiteBackend, self).process_request(request, extra_data)
 
