@@ -30,7 +30,7 @@ class EnrollmentReportPerSiteBackend(BaseReportBackend):
             **kwargs
         )
 
-    def process_request(self, request, extra_data={}):
+    def process_request(self, request, extra_data={}):  # pylint: disable=dangerous-default-value
         """
         Process the enrollment per site report request.
         Obtains the total of users in the provided site.
@@ -94,7 +94,6 @@ def generate_enrollment_per_site_report(course_key, enrolled_users):
             continue
 
         report_data.append({
-            'course': course_key,
             'username': user.get('username', ''),
             'email': user.get('email', ''),
             'date_of_enrollment': str(enrollment[0].created),

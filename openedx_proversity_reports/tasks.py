@@ -12,6 +12,7 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import status
 
+from openedx_proversity_reports.edxapp_wrapper.get_course_content import course_overview
 from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
 from openedx_proversity_reports.reports.backend.enrollment_per_site_report import generate_enrollment_per_site_report
 from openedx_proversity_reports.reports.enrollment_report import EnrollmentReport
@@ -25,9 +26,8 @@ from openedx_proversity_reports.reports.time_spent_report_per_user import Genera
 from openedx_proversity_reports.serializers import ActivityCompletionReportSerializer
 from openedx_proversity_reports.utils import (
     generate_report_as_list,
-    get_course_enrollment,
     get_enrolled_users,
-    get_root_block, get_user_role,
+    get_root_block,
 )
 
 BLOCK_DEFAULT_REPORT_FILTER = ['vertical']
@@ -255,10 +255,14 @@ def enrollment_per_site_report_task(*args, **kwargs):
         course_key=kwargs.get('course_key', ''),
         enrolled_users=kwargs.pop('enrolled_users', []),
     )
+    course_object = course_overview().get_from_id_if_exists(
+        course_id=CourseKey.from_string(kwargs.get('course_key', '')),
+    )
 
     return {
         'site': extra_data.get('site_name', ''),
         'registered_users': extra_data.get('registered_users', 0),
         'course_key': kwargs.get('course_key', ''),
+        'course': course_object.display_name if course_object else '',
         'data': report_data,
     }

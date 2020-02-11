@@ -152,3 +152,8 @@ def plugin_settings(settings):
         'OPR_DEFAULT_PAGE_RESULTS_LIMIT',
         settings.OPR_DEFAULT_PAGE_RESULTS_LIMIT,
     )
+
+    settings.OPR_COURSE_CONTENT = getattr(settings, 'ENV_TOKENS', {}).get(
+        'OPR_COURSE_CONTENT',
+        settings.OPR_COURSE_CONTENT,
+    )
