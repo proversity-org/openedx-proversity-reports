@@ -81,3 +81,4 @@ def plugin_settings(settings):
         }
     }
     settings.OPR_DEFAULT_PAGE_RESULTS_LIMIT = 10
+    settings.OPR_COURSE_CONTENT = 'openedx_proversity_reports.edxapp_wrapper.backends.course_content_i_v1'
