@@ -251,12 +251,14 @@ def enrollment_per_site_report_task(*args, **kwargs):
         }
     """
     extra_data = kwargs.pop('extra_data', {})
+    course_key = CourseKey.from_string(kwargs.get('course_key', ''))
     report_data = generate_enrollment_per_site_report(
-        course_key=kwargs.get('course_key', ''),
+        course_key=course_key,
         enrolled_users=kwargs.pop('enrolled_users', []),
+        date=extra_data.get('date', ''),
     )
     course_object = course_overview().get_from_id_if_exists(
-        course_id=CourseKey.from_string(kwargs.get('course_key', '')),
+        course_id=course_key,
     )
 
     return {
