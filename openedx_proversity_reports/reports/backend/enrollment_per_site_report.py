@@ -3,9 +3,15 @@ Enrollment per site report backend.
 """
 from importlib import import_module
 
+from django.conf import settings
 from opaque_keys.edx.keys import CourseKey
 from rest_framework import status
 
+from openedx_proversity_reports.google_services.bigquery_module import (
+    get_google_bigquery_course_id,
+    get_google_bigquery_data,
+    GoogleBigQueryInformationError,
+)
 from openedx_proversity_reports.reports.backend.base import BaseReportBackend
 from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_attribute, user_signup_source
 from openedx_proversity_reports.utils import get_course_enrollment, get_user_role
@@ -43,10 +49,11 @@ class EnrollmentReportPerSiteBackend(BaseReportBackend):
             HTTP_400_BAD_REQUEST object.
         """
         site_name = extra_data.get('site_name', '')
+        date_string = extra_data.get('date', '')
 
-        if not site_name:
+        if not site_name or not date_string:
             return {
-                'site_name': 'This field is required.',
+                'message': 'missing site_name or date fields.',
                 'success': False,
                 'status': status.HTTP_400_BAD_REQUEST,
             }
@@ -64,12 +71,12 @@ class EnrollmentReportPerSiteBackend(BaseReportBackend):
         return super(EnrollmentReportPerSiteBackend, self).process_request(request, extra_data)
 
 
-def generate_enrollment_per_site_report(course_key, enrolled_users):
+def generate_enrollment_per_site_report(course_key, enrolled_users, date):
     """
     Return the report data.
 
     Args:
-        course_key: Course id string.
+        course_key: Opaque course key object.
         enrolled_users: List that contains information about the enrolled users.
     Returns:
         List of dicts: [{
@@ -81,24 +88,77 @@ def generate_enrollment_per_site_report(course_key, enrolled_users):
             role: User's course role.
         }]
     """
-    opaque_course_key = CourseKey.from_string(course_key)
     report_data = []
+    bigquery_data = list(
+        get_google_bigquery_data(
+            query_string=get_google_bigquery_query(
+                course_dataset_name=get_google_bigquery_course_id(course_key),
+                date=date,
+                course_id=str(course_key),
+            ),
+        ),
+    )
 
     for user in enrolled_users:
         enrollment = get_course_enrollment().objects.filter(
             user__email=user.get('email', ''),
-            course_id=opaque_course_key,
+            course_id=course_key,
         )
 
         if not enrollment:
             continue
+
+        time_spent_per_user = 0
+
+        try:
+            time_spent_per_user = sum(row_data[1] for row_data in bigquery_data if row_data[0] == user.get('username', ''))
+        except IndexError:
+            pass
 
         report_data.append({
             'username': user.get('username', ''),
             'email': user.get('email', ''),
             'date_of_enrollment': str(enrollment[0].created),
             'date_of_registration': user.get('date_joined', ''),
-            'role': get_user_role(enrollment[0].user, opaque_course_key),
+            'role': get_user_role(enrollment[0].user, course_key),
+            'time_spent': time_spent_per_user,
         })
 
     return report_data
+
+
+def get_google_bigquery_query(course_dataset_name, date, course_id):
+    """
+    Return the Google BigQuery query for the time_on_asset_daily table.
+
+    Args:
+        course_dataset_name: Dataset name where the table is stored.
+        date: Date to filter the query. Date format: '%Y-%m-%d' e.g. '2019-01-01'
+        course_id: Course id string.
+    Returns:
+        query_string: The query string to make the query.
+    Raises:
+        GoogleBigQueryInformationError: If OPR_GOOGLE_CLOUD_PROJECT_ID or course_dataset_name
+                                        were not provided or are None.
+    """
+    google_project_id = getattr(settings, 'OPR_GOOGLE_CLOUD_PROJECT_ID', '')
+    query_max_result_number = getattr(settings, 'OPR_GOOGLE_BIGQUERY_MAX_NUMBER_RESULTS_PER_QUERY', 1000)
+
+    if not google_project_id or not course_dataset_name:
+        raise GoogleBigQueryInformationError('Google cloud project id or course_dataset_name are missing.')
+
+    query_string = """
+        SELECT username, time_umid30
+        FROM `{google_project_id}.{bigquery_dataset}.time_on_asset_daily`
+        WHERE course_id = '{course_id}'
+        AND time_umid30 IS NOT NULL
+        AND PARSE_DATETIME('%Y-%m-%d', date) = '{query_date}' LIMIT {max_result_number}
+    """.format(
+        google_project_id=google_project_id,
+        bigquery_dataset=course_dataset_name,
+        course_id=course_id,
+        query_date=date,
+        max_result_number=query_max_result_number,
+    )
+
+    return query_string
