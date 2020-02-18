@@ -49,11 +49,10 @@ class EnrollmentReportPerSiteBackend(BaseReportBackend):
             HTTP_400_BAD_REQUEST object.
         """
         site_name = extra_data.get('site_name', '')
-        date_string = extra_data.get('date', '')
 
-        if not site_name or not date_string:
+        if not site_name:
             return {
-                'message': 'missing site_name or date fields.',
+                'site_name': 'missing field.',
                 'success': False,
                 'status': status.HTTP_400_BAD_REQUEST,
             }
@@ -71,7 +70,7 @@ class EnrollmentReportPerSiteBackend(BaseReportBackend):
         return super(EnrollmentReportPerSiteBackend, self).process_request(request, extra_data)
 
 
-def generate_enrollment_per_site_report(course_key, enrolled_users, date):
+def generate_enrollment_per_site_report(course_key, enrolled_users):
     """
     Return the report data.
 
@@ -93,7 +92,6 @@ def generate_enrollment_per_site_report(course_key, enrolled_users, date):
         get_google_bigquery_data(
             query_string=get_google_bigquery_query(
                 course_dataset_name=get_google_bigquery_course_id(course_key),
-                date=date,
                 course_id=str(course_key),
             ),
         ),
@@ -110,10 +108,9 @@ def generate_enrollment_per_site_report(course_key, enrolled_users, date):
 
         time_spent_per_user = 0
 
-        try:
-            time_spent_per_user = sum(row_data[1] for row_data in bigquery_data if row_data[0] == user.get('username', ''))
-        except IndexError:
-            pass
+        for time_spent_data in bigquery_data:
+            if time_spent_data.get('username', '') == user.get('username', ''):
+                time_spent_per_user = time_spent_data.get('total_time_spent', 0)
 
         report_data.append({
             'username': user.get('username', ''),
@@ -127,7 +124,7 @@ def generate_enrollment_per_site_report(course_key, enrolled_users, date):
     return report_data
 
 
-def get_google_bigquery_query(course_dataset_name, date, course_id):
+def get_google_bigquery_query(course_dataset_name, course_id):
     """
     Return the Google BigQuery query for the time_on_asset_daily table.
 
@@ -148,16 +145,16 @@ def get_google_bigquery_query(course_dataset_name, date, course_id):
         raise GoogleBigQueryInformationError('Google cloud project id or course_dataset_name are missing.')
 
     query_string = """
-        SELECT username, time_umid30
+        SELECT username, SUM(time_umid30) AS total_time_spent
         FROM `{google_project_id}.{bigquery_dataset}.time_on_asset_daily`
         WHERE course_id = '{course_id}'
         AND time_umid30 IS NOT NULL
-        AND PARSE_DATETIME('%Y-%m-%d', date) = '{query_date}' LIMIT {max_result_number}
+        GROUP BY username
+        LIMIT {max_result_number}
     """.format(
         google_project_id=google_project_id,
         bigquery_dataset=course_dataset_name,
         course_id=course_id,
-        query_date=date,
         max_result_number=query_max_result_number,
     )
 
