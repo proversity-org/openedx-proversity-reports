@@ -13,6 +13,7 @@ from openedx_proversity_reports.google_services.bigquery_module import (
     GoogleBigQueryInformationError,
 )
 from openedx_proversity_reports.reports.backend.base import BaseReportBackend
+from openedx_proversity_reports.edxapp_wrapper.get_courseware_library import student_module
 from openedx_proversity_reports.edxapp_wrapper.get_student_library import user_attribute, user_signup_source
 from openedx_proversity_reports.utils import get_course_enrollment, get_user_role
 
@@ -102,6 +103,10 @@ def generate_enrollment_per_site_report(course_key, enrolled_users):
             user__email=user.get('email', ''),
             course_id=course_key,
         )
+        first_student_module_object = student_module().objects.filter(
+            student__username=user.get('username', ''),
+            course_id=course_key,
+        ).order_by('created').first()
 
         if not enrollment:
             continue
@@ -119,6 +124,9 @@ def generate_enrollment_per_site_report(course_key, enrolled_users):
             'date_of_registration': user.get('date_joined', ''),
             'role': get_user_role(enrollment[0].user, course_key),
             'time_spent': time_spent_per_user,
+            'date_of_first_access_to_course': str(
+                first_student_module_object.created,
+            ) if first_student_module_object else '',
         })
 
     return report_data
