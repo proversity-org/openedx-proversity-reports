@@ -39,7 +39,7 @@ def load_requirements(requirements_folder):
     edx_platform_version = get_edx_platform_version()
 
     if edx_platform_version == OPEN_EDX_GINKGO_VERSION:
-        requirements_path = '{}/{}'.format(requirements_folder, 'ginkgo.in')
+        requirements_path = '{}/{}'.format(requirements_folder, 'ginkgo.txt')
     elif edx_platform_version == OPEN_EDX_HAWTHORN_VERSION:
         requirements_path = '{}/{}'.format(requirements_folder, 'hawthorn.in')
     elif edx_platform_version == OPEN_EDX_IRONWOOD_VERSION:
