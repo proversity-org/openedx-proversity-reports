@@ -64,6 +64,7 @@ def plugin_settings(settings):
         'generate_learning_tracker_report',
         'generate_enrollment_report',
         'generate_activity_completion_report',
+        'generate_last_login_report',
     ]
     settings.OPR_TIME_BETWEEN_SESSIONS = 5  # This value is in minutes.
     settings.OPR_COURSE_DETAILS = 'openedx_proversity_reports.edxapp_wrapper.backends.course_details_g_v1'

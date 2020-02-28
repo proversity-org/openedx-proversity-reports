@@ -18,6 +18,7 @@ from openedx_proversity_reports.reports.last_page_accessed import (
 from openedx_proversity_reports.reports.enrollment_report import EnrollmentReport
 from openedx_proversity_reports.reports.learning_tracker_report import LearningTrackerReport
 from openedx_proversity_reports.reports.activity_completion_report import GenerateCompletionReport
+from openedx_proversity_reports.reports.last_login_report import LastLoginReport
 from openedx_proversity_reports.reports.time_spent_report import get_time_spent_report_data
 from openedx_proversity_reports.serializers import ActivityCompletionReportSerializer
 from openedx_proversity_reports.utils import (
@@ -183,5 +184,24 @@ def generate_activity_completion_report(courses, *args, **kwargs):
             passing_score,
         )
         data[course_id] = completion_report.generate_report_data()
+
+
+@task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
+def generate_last_login_report(courses, *args, **kwargs):
+    """
+    Return the last login data for the given courses.
+
+    Args:
+        courses: Course ids list.
+    Returns:
+        Dict with the last login data for each course.
+    """
+    data = {}
+
+    for course in courses:
+        try:
+            data[course] = LastLoginReport(course).generate_report_data(**kwargs)
+        except InvalidKeyError:
+            data[course] = ['Invalid course id value.']
 
     return data
