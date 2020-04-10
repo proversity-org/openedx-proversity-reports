@@ -14,6 +14,7 @@ BIGQUERY_API_SCOPES = (
     'https://www.googleapis.com/auth/cloud-platform',
     'https://www.googleapis.com/auth/bigquery.readonly',
 )
+CCX_CANONICAL_NAMESPACE = 'ccx-v1'
 logger = logging.getLogger(__name__)
 
 
@@ -90,9 +91,33 @@ def get_google_bigquery_course_id(course_key):
     Get the deprecated course key string and then replaces the fordward slash characters '/'
     with underscore characters '_' e.g. course-v1:edX+DemoX+Demo_Course -> edX-DemoX-Demo_Course
     """
-    deprecated_course_key = course_key._to_deprecated_string()  # pylint: disable=protected-access
+    if course_key.CANONICAL_NAMESPACE == CCX_CANONICAL_NAMESPACE:
+        deprecated_course_key = to_ccx_string(course_key)
+    else:
+        deprecated_course_key = course_key._to_deprecated_string()  # pylint: disable=protected-access
 
     return deprecated_course_key.replace('/', '_')
+
+
+def to_ccx_string(course_key):
+    """
+    Returns a forward slash style CCX course id string similar to a deprecated course id style.
+    This function is required because the _to_deprecated_string method in the CCXLocator class
+    is not implemented because the CCX course keys are not supposed to have a deprecated value.
+
+    e.g. ccx-v1:edX+DemoX.1+2014+ccx@10 -> edX/DemoX.1/2014/10
+
+    Args:
+        course_key: opaque_keys.edx.keys.CourseKey instance.
+    Returns:
+        CCX course id string.
+    """
+    return '{org}/{course_number}/{course_run}/{ccx_id}'.format(
+        org=course_key.org,
+        course_number=course_key.course,
+        course_run=course_key.run,
+        ccx_id=course_key.ccx,
+    )
 
 
 class GoogleBigQueryInformationError(Exception):
