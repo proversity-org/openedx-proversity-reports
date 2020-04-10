@@ -96,7 +96,7 @@ def get_google_bigquery_course_id(course_key):
     else:
         deprecated_course_key = course_key._to_deprecated_string()  # pylint: disable=protected-access
 
-    return deprecated_course_key.replace('/', '_')
+    return replace_course_id_characters(deprecated_course_key)
 
 
 def to_ccx_string(course_key):
@@ -118,6 +118,25 @@ def to_ccx_string(course_key):
         course_run=course_key.run,
         ccx_id=course_key.ccx,
     )
+
+
+def replace_course_id_characters(course_id):
+    """
+    Replace some characters in the given course id value.
+
+    These characters ('/', '.', '-') are replaced with '_' to avoid problems with
+    the Google BigQuery name notation.
+
+    Args:
+        course_id: Course id value string.
+    Returns:
+        course_id: Replaced course id value.
+    """
+    for character in ['/', '.', '-']:
+        if character in course_id:
+            course_id = course_id.replace(character, '_')
+
+    return course_id
 
 
 class GoogleBigQueryInformationError(Exception):
