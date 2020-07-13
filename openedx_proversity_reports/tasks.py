@@ -233,7 +233,8 @@ def generate_time_spent_per_user_report(courses, *args, **kwargs):
 
     return report_data
 
-@task()
+
+@task(default_retry_delay=5, max_retries=5)  # pylint: disable=not-callable
 def enrollment_per_site_report_task(*args, **kwargs):
     """
     Generate the enrollemt per site report.
