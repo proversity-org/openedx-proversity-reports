@@ -84,7 +84,6 @@ def generate_last_page_accessed_report(courses, *args, **kwargs):
     last_page_data = get_last_page_accessed_data(courses)
     if last_page_data:
         report_data['last_page_data'] = last_page_data
-        report_data['exit_count_data'] = get_exit_count_data(last_page_data, courses)
 
     return report_data
 
