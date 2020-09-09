@@ -1,0 +1,15 @@
+# Main requirements of your plugin application.
+-c constraints.txt
+
+Django
+edx-opaque-keys
+djangorestframework
+edx-completion
+django-model-utils
+
+# These are the plugin requirements.
+# These constraints are added here to work with setup.py's `install_requires`.
+# Python 2.7 supported and tested versions.
+google-api-python-client
+google-cloud-bigquery
+cachetools<4.0.0

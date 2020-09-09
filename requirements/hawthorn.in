@@ -1,9 +1,0 @@
-Django==1.11.20
-pylint==1.7.6
-bumpversion==0.5.3
-pycodestyle==2.5.0
-edx-opaque-keys==0.4.4
-djangorestframework==3.6.3
-edx-completion==1.0.1
-google-api-python-client==1.7.8
-google-auth==1.6.3

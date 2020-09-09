@@ -1,0 +1,4 @@
+# Additional utilities needed to perform common development tasks
+-c constraints.txt
+
+bumpversion

@@ -1,0 +1,7 @@
+# Requirements for running test suites or quality code tests.
+
+-c constraints.txt
+-r base.txt
+
+pycodestyle
+pylint
