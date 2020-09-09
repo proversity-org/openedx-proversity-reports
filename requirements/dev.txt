@@ -4,5 +4,5 @@
 #
 #    make upgrade
 #
-bump2version==0.5.11      # via bumpversion
+bump2version==1.0.0       # via bumpversion
 bumpversion==0.6.0        # via -r requirements/dev.in

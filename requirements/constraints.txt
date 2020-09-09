@@ -8,21 +8,8 @@
 # pin when possible.  Writing an issue against the offending project and
 # linking to it here is good.
 
-# Django version 2.0.0 dropped support for python 2.7.
-Django<2.0
-
-# Already in python3 standard library.
-futures; python_version == "2.7"
+# Stay on the latest LTS release of Django
+Django<2.3
 
 # edx-platform version compatibility.
-edx-opaque-keys==0.4.4
-djangorestframework==3.6.3
-edx-completion==2.0.0
-django-model-utils==3.0.0
-pylint==1.9.3
-pycodestyle==2.5.0
-
-# Python 2.7 supported versions.
-google-api-python-client<=1.11.0
-google-cloud-bigquery<=1.27.2
-cachetools<4.0.0
+djangorestframework==3.9.4
