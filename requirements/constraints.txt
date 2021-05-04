@@ -1,0 +1,26 @@
+# Version constraints for pip-installation.
+#
+# This file doesn't install any packages. It specifies version constraints
+# that will be applied if a package is needed.
+#
+# When pinning something here, please provide an explanation of why.  Ideally,
+# link to other information that will help people in the future to remove the
+# pin when possible.  Writing an issue against the offending project and
+# linking to it here is good.
+
+# Django version 2.0.0 dropped support for python 2.7.
+Django==1.11.20
+
+# edx-platform version compatibility.
+edx-opaque-keys==0.4.4
+djangorestframework==3.6.3
+edx-completion==1.0.1
+django-model-utils==3.0.0
+pylint==1.7.6
+pycodestyle==2.5.0
+
+# Python 2.7 supported versions.
+rsa==4.0
+google-api-python-client==1.7.8
+google-cloud-bigquery<=1.20.0
+cachetools==3.1.1
